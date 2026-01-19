@@ -250,7 +250,9 @@ class TestTransactionCategoryIntegration:
         sqlserver_session.flush()
 
         # Create link
-        link = TransactionCategory(transaction_id=transaction.id, category_id=category.id)
+        link = TransactionCategory(
+            transaction_id=transaction.id, category_id=category.id
+        )
         sqlserver_session.add(link)
         sqlserver_session.flush()
 

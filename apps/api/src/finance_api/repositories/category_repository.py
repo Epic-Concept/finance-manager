@@ -114,15 +114,17 @@ class CategoryRepository:
         if new_parent_id is not None:
             new_parent = self._session.get(Category, new_parent_id)
             if new_parent is None:
-                raise CategoryNotFoundError(f"New parent category {new_parent_id} not found")
+                raise CategoryNotFoundError(
+                    f"New parent category {new_parent_id} not found"
+                )
 
         # Get all descendants of this category (including self)
         descendant_ids_stmt = select(CategoryClosure.descendant_id).where(
             CategoryClosure.ancestor_id == category_id
         )
-        descendant_ids = [
-            r for r in self._session.execute(descendant_ids_stmt).scalars().all()
-        ]
+        descendant_ids = list(
+            self._session.execute(descendant_ids_stmt).scalars().all()
+        )
 
         # Delete all closure entries where:
         # - descendant is in the subtree AND

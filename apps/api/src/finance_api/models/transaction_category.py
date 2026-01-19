@@ -13,7 +13,9 @@ class TransactionCategory(Base):
 
     __tablename__ = "transaction_categories"
     __table_args__ = (
-        UniqueConstraint("transaction_id", name="UQ_transaction_categories_transaction"),
+        UniqueConstraint(
+            "transaction_id", name="UQ_transaction_categories_transaction"
+        ),
         Index("IX_transaction_categories_category", "category_id"),
         {"schema": "finance"},
     )

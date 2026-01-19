@@ -182,7 +182,7 @@ class TestCategoryRepositoryGetDescendants:
         db_session.flush()
         groceries = repo.create(name="Groceries", parent_id=food.id)
         db_session.flush()
-        vegetables = repo.create(name="Vegetables", parent_id=groceries.id)
+        repo.create(name="Vegetables", parent_id=groceries.id)
         db_session.flush()
 
         descendants = repo.get_descendants(food.id)

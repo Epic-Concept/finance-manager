@@ -11,7 +11,6 @@ from sqlalchemy.orm import Session, sessionmaker
 from finance_api.db.base import Base, import_models
 from finance_api.main import app
 
-
 # ============================================================================
 # Helper functions
 # ============================================================================

@@ -1,6 +1,6 @@
 """Integration tests for CategoryRepository with SQL Server."""
 
-from datetime import date, datetime, timedelta
+from datetime import date
 from decimal import Decimal
 
 import pytest
@@ -32,7 +32,9 @@ class TestCategoryRepositoryIntegration:
         assert len(ancestors) == 1
         assert ancestors[0].id == category.id
 
-    def test_create_child_category_with_closure(self, sqlserver_session: Session) -> None:
+    def test_create_child_category_with_closure(
+        self, sqlserver_session: Session
+    ) -> None:
         """Test creating a child category creates proper closure entries."""
         repo = CategoryRepository(sqlserver_session)
 
@@ -140,7 +142,9 @@ class TestCategoryRepositoryIntegration:
         self, sqlserver_session: Session
     ) -> None:
         """Test deleting a category with children raises error if not cascading."""
-        from finance_api.repositories.category_repository import CategoryHasChildrenError
+        from finance_api.repositories.category_repository import (
+            CategoryHasChildrenError,
+        )
 
         repo = CategoryRepository(sqlserver_session)
 
@@ -151,7 +155,7 @@ class TestCategoryRepositoryIntegration:
         child = repo.create(name="Child", parent_id=root.id)
         sqlserver_session.flush()
 
-        grandchild = repo.create(name="Grandchild", parent_id=child.id)
+        repo.create(name="Grandchild", parent_id=child.id)
         sqlserver_session.flush()
 
         child_id = child.id
