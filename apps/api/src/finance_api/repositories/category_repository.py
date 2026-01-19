@@ -2,7 +2,7 @@
 
 from decimal import Decimal
 
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
 from finance_api.models.category import Category, CategoryClosure
@@ -131,7 +131,7 @@ class CategoryRepository:
         # - ancestor is NOT in the subtree
         for desc_id in descendant_ids:
             delete_stmt = (
-                CategoryClosure.__table__.delete()
+                delete(CategoryClosure)
                 .where(CategoryClosure.descendant_id == desc_id)
                 .where(CategoryClosure.ancestor_id.notin_(descendant_ids))
             )
@@ -207,7 +207,7 @@ class CategoryRepository:
             for desc_id in descendant_ids:
                 # Delete closure entries
                 self._session.execute(
-                    CategoryClosure.__table__.delete().where(
+                    delete(CategoryClosure).where(
                         (CategoryClosure.ancestor_id == desc_id)
                         | (CategoryClosure.descendant_id == desc_id)
                     )
@@ -219,7 +219,7 @@ class CategoryRepository:
 
         # Delete closure entries for this category
         self._session.execute(
-            CategoryClosure.__table__.delete().where(
+            delete(CategoryClosure).where(
                 (CategoryClosure.ancestor_id == category_id)
                 | (CategoryClosure.descendant_id == category_id)
             )
