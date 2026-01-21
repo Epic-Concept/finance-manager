@@ -284,6 +284,32 @@ class CategoryRepository:
 
         return list(self._session.execute(stmt).scalars().all())
 
+    def get(self, category_id: int) -> Category:
+        """Get a category by ID.
+
+        Args:
+            category_id: The category ID.
+
+        Returns:
+            The Category.
+
+        Raises:
+            CategoryNotFoundError: If category doesn't exist.
+        """
+        category = self._session.get(Category, category_id)
+        if category is None:
+            raise CategoryNotFoundError(f"Category {category_id} not found")
+        return category
+
+    def get_all(self) -> list[Category]:
+        """Get all categories.
+
+        Returns:
+            List of all categories.
+        """
+        stmt = select(Category).order_by(Category.name)
+        return list(self._session.execute(stmt).scalars().all())
+
     def get_subtree_transaction_sum(self, category_id: int) -> Decimal:
         """Sum all transactions in a category and its descendants.
 
