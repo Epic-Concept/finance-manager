@@ -2,6 +2,7 @@
 
 from datetime import datetime
 from decimal import Decimal
+from typing import Any
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -85,7 +86,7 @@ class CategoryEvidenceRepository:
         return evidence
 
     def create_batch(
-        self, evidence_list: list[dict[str, object]]
+        self, evidence_list: list[dict[str, Any]]
     ) -> list[CategoryEvidence]:
         """Create multiple category evidence records.
 

@@ -2,6 +2,7 @@
 
 import argparse
 import sys
+from typing import Any
 
 from sqlalchemy import text
 
@@ -396,7 +397,7 @@ def seed_categories(clear: bool = False) -> int:
         created_count = 0
 
         def create_category_tree(
-            categories: list[dict[str, object]], parent_id: int | None = None
+            categories: list[dict[str, Any]], parent_id: int | None = None
         ) -> int:
             """Recursively create categories and their children."""
             count = 0
