@@ -102,9 +102,15 @@ class TestEmailAccountRepositoryGetActiveByPriority:
         repo = EmailAccountRepository(db_session)
 
         # Create accounts with different priorities
-        acc1 = repo.create(email_address="low@example.com", provider="gmail", priority=10)
-        acc2 = repo.create(email_address="high@example.com", provider="gmail", priority=0)
-        acc3 = repo.create(email_address="mid@example.com", provider="gmail", priority=5)
+        acc1 = repo.create(
+            email_address="low@example.com", provider="gmail", priority=10
+        )
+        acc2 = repo.create(
+            email_address="high@example.com", provider="gmail", priority=0
+        )
+        acc3 = repo.create(
+            email_address="mid@example.com", provider="gmail", priority=5
+        )
         db_session.flush()
 
         accounts = repo.get_active_by_priority()

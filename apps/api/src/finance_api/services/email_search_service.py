@@ -215,9 +215,7 @@ class EmailSearchService:
             body_keywords=[],  # Not typically used in IMAP search
         )
 
-    def search_for_transaction(
-        self, transaction: Transaction
-    ) -> list[EmailMessage]:
+    def search_for_transaction(self, transaction: Transaction) -> list[EmailMessage]:
         """Search all email accounts for emails related to a transaction.
 
         Iterates through active email accounts by priority and searches

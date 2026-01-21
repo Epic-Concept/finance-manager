@@ -63,7 +63,10 @@ def test_email_account_repr() -> None:
         provider="gmail",
     )
 
-    assert repr(account) == "<EmailAccount(id=1, email='test@example.com', provider='gmail')>"
+    assert (
+        repr(account)
+        == "<EmailAccount(id=1, email='test@example.com', provider='gmail')>"
+    )
 
 
 def test_email_account_table_name() -> None:

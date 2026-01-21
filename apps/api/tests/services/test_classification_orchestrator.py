@@ -68,7 +68,9 @@ def evidence_repo(db_session: Session) -> CategoryEvidenceRepository:
 
 
 @pytest.fixture
-def rules_service(rule_repo: ClassificationRuleRepository) -> RulesClassificationService:
+def rules_service(
+    rule_repo: ClassificationRuleRepository,
+) -> RulesClassificationService:
     """Create a RulesClassificationService."""
     return RulesClassificationService(rule_repo)
 

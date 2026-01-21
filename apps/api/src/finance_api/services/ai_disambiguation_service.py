@@ -178,9 +178,7 @@ class AIDisambiguationService:
 
         return evidence_records
 
-    def disambiguate(
-        self, transaction: Transaction
-    ) -> DisambiguationResult:
+    def disambiguate(self, transaction: Transaction) -> DisambiguationResult:
         """Disambiguate a transaction using email receipts.
 
         Steps:

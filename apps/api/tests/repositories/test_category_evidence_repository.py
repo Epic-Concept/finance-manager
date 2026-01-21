@@ -69,7 +69,10 @@ class TestCategoryEvidenceRepositoryCreate:
     """Tests for CategoryEvidenceRepository.create()."""
 
     def test_create_basic_evidence(
-        self, db_session: Session, test_transaction: Transaction, test_category: Category
+        self,
+        db_session: Session,
+        test_transaction: Transaction,
+        test_category: Category,
     ) -> None:
         """Test creating basic category evidence."""
         repo = CategoryEvidenceRepository(db_session)
@@ -91,7 +94,10 @@ class TestCategoryEvidenceRepositoryCreate:
         assert evidence.evidence_type == "email"
 
     def test_create_evidence_with_email_provenance(
-        self, db_session: Session, test_transaction: Transaction, test_category: Category
+        self,
+        db_session: Session,
+        test_transaction: Transaction,
+        test_category: Category,
     ) -> None:
         """Test creating evidence with full email provenance."""
         email_repo = EmailAccountRepository(db_session)
@@ -123,7 +129,10 @@ class TestCategoryEvidenceRepositoryCreate:
         assert evidence.evidence_summary == "Order confirmation from Amazon"
 
     def test_create_evidence_with_ai_metadata(
-        self, db_session: Session, test_transaction: Transaction, test_category: Category
+        self,
+        db_session: Session,
+        test_transaction: Transaction,
+        test_category: Category,
     ) -> None:
         """Test creating evidence with AI classification metadata."""
         repo = CategoryEvidenceRepository(db_session)
@@ -149,8 +158,11 @@ class TestCategoryEvidenceRepositoryCreateBatch:
     """Tests for CategoryEvidenceRepository.create_batch()."""
 
     def test_create_batch_multi_item(
-        self, db_session: Session, test_transaction: Transaction,
-        test_category: Category, test_category_2: Category
+        self,
+        db_session: Session,
+        test_transaction: Transaction,
+        test_category: Category,
+        test_category_2: Category,
     ) -> None:
         """Test creating multiple evidence records at once."""
         repo = CategoryEvidenceRepository(db_session)
@@ -192,7 +204,10 @@ class TestCategoryEvidenceRepositoryGet:
     """Tests for CategoryEvidenceRepository.get()."""
 
     def test_get_existing_evidence(
-        self, db_session: Session, test_transaction: Transaction, test_category: Category
+        self,
+        db_session: Session,
+        test_transaction: Transaction,
+        test_category: Category,
     ) -> None:
         """Test getting existing evidence by ID."""
         repo = CategoryEvidenceRepository(db_session)
@@ -221,7 +236,10 @@ class TestCategoryEvidenceRepositoryGetByTransaction:
     """Tests for CategoryEvidenceRepository.get_by_transaction()."""
 
     def test_get_all_evidence_for_transaction(
-        self, db_session: Session, test_transaction: Transaction, test_category: Category
+        self,
+        db_session: Session,
+        test_transaction: Transaction,
+        test_category: Category,
     ) -> None:
         """Test getting all evidence for a transaction."""
         repo = CategoryEvidenceRepository(db_session)
@@ -261,7 +279,10 @@ class TestCategoryEvidenceRepositoryGetTransactionTotal:
     """Tests for CategoryEvidenceRepository.get_transaction_total()."""
 
     def test_calculate_total(
-        self, db_session: Session, test_transaction: Transaction, test_category: Category
+        self,
+        db_session: Session,
+        test_transaction: Transaction,
+        test_category: Category,
     ) -> None:
         """Test calculating total of evidence items."""
         repo = CategoryEvidenceRepository(db_session)
@@ -303,8 +324,11 @@ class TestCategoryEvidenceRepositoryGetDominantCategory:
     """Tests for CategoryEvidenceRepository.get_dominant_category()."""
 
     def test_get_dominant_category(
-        self, db_session: Session, test_transaction: Transaction,
-        test_category: Category, test_category_2: Category
+        self,
+        db_session: Session,
+        test_transaction: Transaction,
+        test_category: Category,
+        test_category_2: Category,
     ) -> None:
         """Test finding category with highest total value."""
         repo = CategoryEvidenceRepository(db_session)
@@ -353,7 +377,10 @@ class TestCategoryEvidenceRepositoryDelete:
     """Tests for delete methods."""
 
     def test_delete_by_transaction(
-        self, db_session: Session, test_transaction: Transaction, test_category: Category
+        self,
+        db_session: Session,
+        test_transaction: Transaction,
+        test_category: Category,
     ) -> None:
         """Test deleting all evidence for a transaction."""
         repo = CategoryEvidenceRepository(db_session)
@@ -381,7 +408,10 @@ class TestCategoryEvidenceRepositoryDelete:
         assert len(repo.get_by_transaction(test_transaction.id)) == 0
 
     def test_delete_single_evidence(
-        self, db_session: Session, test_transaction: Transaction, test_category: Category
+        self,
+        db_session: Session,
+        test_transaction: Transaction,
+        test_category: Category,
     ) -> None:
         """Test deleting a single evidence record."""
         repo = CategoryEvidenceRepository(db_session)

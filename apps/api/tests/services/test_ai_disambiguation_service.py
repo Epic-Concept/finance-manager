@@ -391,7 +391,9 @@ class TestAIDisambiguationServiceShipping:
 
         mock_client = MockEmailClient([sample_email])
         email_service = EmailSearchService(email_account_repo, email_client=mock_client)
-        extraction_service = MockReceiptExtractionService(receipt=receipt_with_free_shipping)
+        extraction_service = MockReceiptExtractionService(
+            receipt=receipt_with_free_shipping
+        )
         mapping_service = CategoryMappingService(category_repo)
 
         service = AIDisambiguationService(
@@ -410,7 +412,9 @@ class TestAIDisambiguationServiceShipping:
         assert len(result.evidence_records) == 2
 
         # Find the shipping evidence record
-        shipping_evidence = [e for e in result.evidence_records if e.item_description == "Shipping"]
+        shipping_evidence = [
+            e for e in result.evidence_records if e.item_description == "Shipping"
+        ]
         assert len(shipping_evidence) == 1
         assert shipping_evidence[0].item_price == Decimal("0.00")
 
@@ -447,7 +451,9 @@ class TestAIDisambiguationServiceShipping:
 
         mock_client = MockEmailClient([sample_email])
         email_service = EmailSearchService(email_account_repo, email_client=mock_client)
-        extraction_service = MockReceiptExtractionService(receipt=receipt_without_shipping)
+        extraction_service = MockReceiptExtractionService(
+            receipt=receipt_without_shipping
+        )
         mapping_service = CategoryMappingService(category_repo)
 
         service = AIDisambiguationService(
@@ -501,7 +507,9 @@ class TestAIDisambiguationServiceConfidence:
 
         mock_client = MockEmailClient([sample_email])
         email_service = EmailSearchService(email_account_repo, email_client=mock_client)
-        extraction_service = MockReceiptExtractionService(receipt=low_confidence_receipt)
+        extraction_service = MockReceiptExtractionService(
+            receipt=low_confidence_receipt
+        )
         mapping_service = CategoryMappingService(category_repo)
 
         service = AIDisambiguationService(

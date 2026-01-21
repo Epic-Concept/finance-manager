@@ -471,27 +471,21 @@ class TestRulesClassificationServiceBatch:
 class TestRulesClassificationServiceTestRule:
     """Tests for rule expression testing."""
 
-    def test_valid_expression(
-        self, service: RulesClassificationService
-    ) -> None:
+    def test_valid_expression(self, service: RulesClassificationService) -> None:
         """Test validating a correct expression."""
         is_valid, error = service.test_rule_expression('description =~ "(?i)test"')
 
         assert is_valid is True
         assert error is None
 
-    def test_invalid_expression(
-        self, service: RulesClassificationService
-    ) -> None:
+    def test_invalid_expression(self, service: RulesClassificationService) -> None:
         """Test validating an invalid expression."""
         is_valid, error = service.test_rule_expression("invalid syntax here!!!")
 
         assert is_valid is False
         assert error is not None
 
-    def test_expression_against_data(
-        self, service: RulesClassificationService
-    ) -> None:
+    def test_expression_against_data(self, service: RulesClassificationService) -> None:
         """Test evaluating expression against test data."""
         test_data = {
             "description": "TESCO STORES",

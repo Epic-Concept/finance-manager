@@ -236,7 +236,9 @@ class TestCategoryMappingServiceMapReceipt:
             order_date=date(2026, 1, 15),
             items=[
                 ExtractedItem(
-                    name="Cheap Cable", price=Decimal("5.00"), category_hint="Electronics"
+                    name="Cheap Cable",
+                    price=Decimal("5.00"),
+                    category_hint="Electronics",
                 ),
                 ExtractedItem(
                     name="Expensive Book",

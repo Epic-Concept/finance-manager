@@ -39,9 +39,9 @@ class RulesClassificationService:
             rule_repository: Repository for accessing classification rules.
         """
         self._rule_repository = rule_repository
-        self._compiled_rules: list[tuple[ClassificationRule, rule_engine.Rule]] | None = (
-            None
-        )
+        self._compiled_rules: (
+            list[tuple[ClassificationRule, rule_engine.Rule]] | None
+        ) = None
         self._context = self._create_context()
 
     def _create_context(self) -> rule_engine.Context:
@@ -64,7 +64,9 @@ class RulesClassificationService:
             )
         )
 
-    def _load_and_compile_rules(self) -> list[tuple[ClassificationRule, rule_engine.Rule]]:
+    def _load_and_compile_rules(
+        self,
+    ) -> list[tuple[ClassificationRule, rule_engine.Rule]]:
         """Load rules from repository and compile them.
 
         Returns:

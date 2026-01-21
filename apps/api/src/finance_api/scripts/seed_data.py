@@ -59,7 +59,9 @@ def load_bank_transactions(parquet_path: Path, clear: bool = False) -> int:
                 txn_date = datetime.strptime(txn_date.split(" ")[0], "%Y-%m-%d").date()
 
             # Get description
-            description = row.get("description") or row.get("merchant_name") or "Unknown"
+            description = (
+                row.get("description") or row.get("merchant_name") or "Unknown"
+            )
             if pd.isna(description) or not description:
                 description = "Unknown"
 
@@ -72,7 +74,9 @@ def load_bank_transactions(parquet_path: Path, clear: bool = False) -> int:
                 amount=amount,
                 currency=str(row["currency"]),
                 external_id=external_id,
-                account_name=str(row["account_name"]) if pd.notna(row["account_name"]) else None,
+                account_name=(
+                    str(row["account_name"]) if pd.notna(row["account_name"]) else None
+                ),
                 notes=None,
             )
             db.add(transaction)
@@ -142,7 +146,9 @@ def load_purchases(parquet_path: Path, clear: bool = False) -> int:
                 purchase_datetime=purchase_dt,
                 price=Decimal(str(row["price"])),
                 currency="PLN",  # Default currency for purchases
-                is_deferred_payment=bool(row["credited"]) if pd.notna(row["credited"]) else False,
+                is_deferred_payment=(
+                    bool(row["credited"]) if pd.notna(row["credited"]) else False
+                ),
                 transaction_id=None,
             )
             db.add(purchase)

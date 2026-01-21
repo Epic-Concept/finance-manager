@@ -53,7 +53,9 @@ class ClassificationOrchestrator:
         rules_service: RulesClassificationService,
         disambiguation_service: AIDisambiguationService | None,
         evidence_repository: CategoryEvidenceRepository,
-        transaction_category_updater: Callable[[int, int], TransactionCategory] | None = None,
+        transaction_category_updater: (
+            Callable[[int, int], TransactionCategory] | None
+        ) = None,
     ) -> None:
         """Initialize the orchestrator.
 

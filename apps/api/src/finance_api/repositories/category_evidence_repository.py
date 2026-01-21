@@ -84,9 +84,7 @@ class CategoryEvidenceRepository:
         self._session.flush()
         return evidence
 
-    def create_batch(
-        self, evidence_list: list[dict]
-    ) -> list[CategoryEvidence]:
+    def create_batch(self, evidence_list: list[dict]) -> list[CategoryEvidence]:
         """Create multiple category evidence records.
 
         Args:
@@ -193,9 +191,11 @@ class CategoryEvidenceRepository:
             )
             .where(CategoryEvidence.transaction_id == transaction_id)
             .group_by(CategoryEvidence.category_id)
-            .order_by(func.sum(
-                CategoryEvidence.item_price * CategoryEvidence.item_quantity
-            ).desc())
+            .order_by(
+                func.sum(
+                    CategoryEvidence.item_price * CategoryEvidence.item_quantity
+                ).desc()
+            )
             .limit(1)
         )
 

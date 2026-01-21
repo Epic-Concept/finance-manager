@@ -220,7 +220,9 @@ class CategoryMappingService:
 
             if category_id is not None and category_name is not None:
                 mapped.append(
-                    MappedItem(item=item, category_id=category_id, category_name=category_name)
+                    MappedItem(
+                        item=item, category_id=category_id, category_name=category_name
+                    )
                 )
                 item_value = item.price * item.quantity
                 total_value += item_value

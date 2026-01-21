@@ -187,7 +187,12 @@ class TestReceiptExtractionServiceConversion:
             "merchant": "Amazon UK",
             "order_date": "2026-01-15",
             "items": [
-                {"name": "USB Cable", "price": 9.99, "quantity": 1, "category_hint": "Electronics"}
+                {
+                    "name": "USB Cable",
+                    "price": 9.99,
+                    "quantity": 1,
+                    "category_hint": "Electronics",
+                }
             ],
             "shipping_cost": None,
             "total": 9.99,
@@ -232,7 +237,12 @@ class TestReceiptExtractionServiceConversion:
             "merchant": "Amazon",
             "order_date": "2026-01-20",
             "items": [
-                {"name": "Book", "price": 15.0, "quantity": 2, "category_hint": "Books"},
+                {
+                    "name": "Book",
+                    "price": 15.0,
+                    "quantity": 2,
+                    "category_hint": "Books",
+                },
                 {"name": "Cable", "price": 10.0, "quantity": 1},
             ],
             "shipping_cost": None,
@@ -308,7 +318,9 @@ class TestReceiptExtractionServiceExtract:
             )
         ]
 
-        with patch("finance_api.services.receipt_extraction_service.Anthropic") as mock_client:
+        with patch(
+            "finance_api.services.receipt_extraction_service.Anthropic"
+        ) as mock_client:
             instance = mock_client.return_value
             instance.messages.create.return_value = mock_response
 
@@ -321,7 +333,9 @@ class TestReceiptExtractionServiceExtract:
 
     def test_extract_api_failure(self, sample_email: EmailMessage) -> None:
         """Test handling of API failure."""
-        with patch("finance_api.services.receipt_extraction_service.Anthropic") as mock_client:
+        with patch(
+            "finance_api.services.receipt_extraction_service.Anthropic"
+        ) as mock_client:
             instance = mock_client.return_value
             instance.messages.create.side_effect = Exception("API Error")
 
@@ -361,7 +375,9 @@ class TestReceiptExtractionServiceBatch:
             else:
                 raise Exception("API Error")
 
-        with patch("finance_api.services.receipt_extraction_service.Anthropic") as mock_client:
+        with patch(
+            "finance_api.services.receipt_extraction_service.Anthropic"
+        ) as mock_client:
             instance = mock_client.return_value
             instance.messages.create.side_effect = side_effect
 

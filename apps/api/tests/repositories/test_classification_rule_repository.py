@@ -59,7 +59,7 @@ class TestClassificationRuleRepositoryCreate:
 
         rule = repo.create(
             name="High Priority",
-            rule_expression='amount > 100',
+            rule_expression="amount > 100",
             category_id=test_category.id,
             priority=5,
         )
@@ -280,9 +280,7 @@ class TestClassificationRuleRepositoryActivateDeactivate:
 
         assert rule.is_active is False
 
-    def test_activate_rule(
-        self, db_session: Session, test_category: Category
-    ) -> None:
+    def test_activate_rule(self, db_session: Session, test_category: Category) -> None:
         """Test reactivating a rule."""
         repo = ClassificationRuleRepository(db_session)
         rule = repo.create(
@@ -302,9 +300,7 @@ class TestClassificationRuleRepositoryActivateDeactivate:
 class TestClassificationRuleRepositoryDelete:
     """Tests for ClassificationRuleRepository.delete()."""
 
-    def test_delete_rule(
-        self, db_session: Session, test_category: Category
-    ) -> None:
+    def test_delete_rule(self, db_session: Session, test_category: Category) -> None:
         """Test deleting a rule."""
         repo = ClassificationRuleRepository(db_session)
         rule = repo.create(

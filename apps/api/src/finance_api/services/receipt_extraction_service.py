@@ -142,7 +142,9 @@ Date: {email.date.isoformat() if email.date else 'Unknown'}
         try:
             return json.loads(text)  # type: ignore[no-any-return]
         except json.JSONDecodeError as e:
-            raise ReceiptExtractionError(f"Failed to parse LLM response as JSON: {e}") from e
+            raise ReceiptExtractionError(
+                f"Failed to parse LLM response as JSON: {e}"
+            ) from e
 
     def _validate_response(self, data: dict[str, Any]) -> None:
         """Validate the extracted data structure.
@@ -156,7 +158,9 @@ Date: {email.date.isoformat() if email.date else 'Unknown'}
         required_fields = ["merchant", "order_date", "items", "total", "currency"]
         for required_field in required_fields:
             if required_field not in data:
-                raise ReceiptExtractionError(f"Missing required field: {required_field}")
+                raise ReceiptExtractionError(
+                    f"Missing required field: {required_field}"
+                )
 
         if not isinstance(data["items"], list):
             raise ReceiptExtractionError("Items must be a list")

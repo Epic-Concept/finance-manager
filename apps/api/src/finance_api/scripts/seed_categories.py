@@ -66,9 +66,21 @@ CATEGORY_HIERARCHY = [
         "commitment_level": 0,
         "frequency": "monthly",
         "children": [
-            {"name": "Credit Card Minimum", "commitment_level": 0, "frequency": "monthly"},
-            {"name": "Student Loan Minimum", "commitment_level": 0, "frequency": "monthly"},
-            {"name": "Other Debt Minimum", "commitment_level": 0, "frequency": "monthly"},
+            {
+                "name": "Credit Card Minimum",
+                "commitment_level": 0,
+                "frequency": "monthly",
+            },
+            {
+                "name": "Student Loan Minimum",
+                "commitment_level": 0,
+                "frequency": "monthly",
+            },
+            {
+                "name": "Other Debt Minimum",
+                "commitment_level": 0,
+                "frequency": "monthly",
+            },
         ],
     },
     # LEVEL 1: COMMITTED (Contractual)
@@ -80,7 +92,11 @@ CATEGORY_HIERARCHY = [
             {"name": "Auto Insurance", "commitment_level": 1, "frequency": "monthly"},
             {"name": "Life Insurance", "commitment_level": 1, "frequency": "monthly"},
             {"name": "Home Insurance", "commitment_level": 1, "frequency": "annual"},
-            {"name": "Disability Insurance", "commitment_level": 1, "frequency": "monthly"},
+            {
+                "name": "Disability Insurance",
+                "commitment_level": 1,
+                "frequency": "monthly",
+            },
         ],
     },
     {
@@ -119,7 +135,11 @@ CATEGORY_HIERARCHY = [
         "frequency": "monthly",
         "children": [
             {"name": "Work Software", "commitment_level": 1, "frequency": "monthly"},
-            {"name": "Professional Memberships", "commitment_level": 1, "frequency": "annual"},
+            {
+                "name": "Professional Memberships",
+                "commitment_level": 1,
+                "frequency": "annual",
+            },
         ],
     },
     {
@@ -127,8 +147,16 @@ CATEGORY_HIERARCHY = [
         "commitment_level": 1,
         "frequency": "monthly",
         "children": [
-            {"name": "Credit Card Extra", "commitment_level": 1, "frequency": "monthly"},
-            {"name": "Loan Extra Payments", "commitment_level": 1, "frequency": "monthly"},
+            {
+                "name": "Credit Card Extra",
+                "commitment_level": 1,
+                "frequency": "monthly",
+            },
+            {
+                "name": "Loan Extra Payments",
+                "commitment_level": 1,
+                "frequency": "monthly",
+            },
         ],
     },
     # LEVEL 2: LIFESTYLE (Adjustable)
@@ -171,7 +199,11 @@ CATEGORY_HIERARCHY = [
             {"name": "Repairs", "commitment_level": 2, "frequency": "one-time"},
             {"name": "Garden", "commitment_level": 2, "frequency": "monthly"},
             {"name": "Decor", "commitment_level": 2, "frequency": "one-time"},
-            {"name": "Cleaning Supplies", "commitment_level": 2, "frequency": "monthly"},
+            {
+                "name": "Cleaning Supplies",
+                "commitment_level": 2,
+                "frequency": "monthly",
+            },
         ],
     },
     {
@@ -221,7 +253,11 @@ CATEGORY_HIERARCHY = [
         "commitment_level": 3,
         "frequency": "monthly",
         "children": [
-            {"name": "Streaming Services", "commitment_level": 3, "frequency": "monthly"},
+            {
+                "name": "Streaming Services",
+                "commitment_level": 3,
+                "frequency": "monthly",
+            },
             {"name": "Movies", "commitment_level": 3, "frequency": "one-time"},
             {"name": "Concerts", "commitment_level": 3, "frequency": "one-time"},
             {"name": "Games", "commitment_level": 3, "frequency": "one-time"},
@@ -232,9 +268,17 @@ CATEGORY_HIERARCHY = [
         "commitment_level": 3,
         "frequency": "one-time",
         "children": [
-            {"name": "Sports Equipment", "commitment_level": 3, "frequency": "one-time"},
+            {
+                "name": "Sports Equipment",
+                "commitment_level": 3,
+                "frequency": "one-time",
+            },
             {"name": "Arts & Crafts", "commitment_level": 3, "frequency": "one-time"},
-            {"name": "Outdoor Activities", "commitment_level": 3, "frequency": "one-time"},
+            {
+                "name": "Outdoor Activities",
+                "commitment_level": 3,
+                "frequency": "one-time",
+            },
         ],
     },
     {
@@ -243,7 +287,11 @@ CATEGORY_HIERARCHY = [
         "frequency": "one-time",
         "children": [
             {"name": "Electronics", "commitment_level": 3, "frequency": "one-time"},
-            {"name": "General Shopping", "commitment_level": 3, "frequency": "one-time"},
+            {
+                "name": "General Shopping",
+                "commitment_level": 3,
+                "frequency": "one-time",
+            },
             {"name": "Home Goods", "commitment_level": 3, "frequency": "one-time"},
         ],
     },
@@ -254,7 +302,11 @@ CATEGORY_HIERARCHY = [
         "children": [
             {"name": "Birthday Gifts", "commitment_level": 3, "frequency": "one-time"},
             {"name": "Holiday Gifts", "commitment_level": 3, "frequency": "annual"},
-            {"name": "Charitable Donations", "commitment_level": 3, "frequency": "one-time"},
+            {
+                "name": "Charitable Donations",
+                "commitment_level": 3,
+                "frequency": "one-time",
+            },
         ],
     },
     {
@@ -264,8 +316,16 @@ CATEGORY_HIERARCHY = [
         "children": [
             {"name": "Flights", "commitment_level": 3, "frequency": "one-time"},
             {"name": "Hotels", "commitment_level": 3, "frequency": "one-time"},
-            {"name": "Vacation Activities", "commitment_level": 3, "frequency": "one-time"},
-            {"name": "Travel Insurance", "commitment_level": 3, "frequency": "one-time"},
+            {
+                "name": "Vacation Activities",
+                "commitment_level": 3,
+                "frequency": "one-time",
+            },
+            {
+                "name": "Travel Insurance",
+                "commitment_level": 3,
+                "frequency": "one-time",
+            },
         ],
     },
     # LEVEL 4: FUTURE (Savings)
@@ -300,7 +360,11 @@ CATEGORY_HIERARCHY = [
         "commitment_level": 4,
         "frequency": "monthly",
         "children": [
-            {"name": "House Down Payment", "commitment_level": 4, "frequency": "monthly"},
+            {
+                "name": "House Down Payment",
+                "commitment_level": 4,
+                "frequency": "monthly",
+            },
             {"name": "New Car", "commitment_level": 4, "frequency": "monthly"},
             {"name": "Education Fund", "commitment_level": 4, "frequency": "monthly"},
             {"name": "Vacation Fund", "commitment_level": 4, "frequency": "monthly"},
@@ -344,7 +408,9 @@ def seed_categories(clear: bool = False) -> int:
                     is_essential=False,
                 )
                 count += 1
-                print(f"  Created: {cat_data['name']} (level={cat_data.get('commitment_level')})")
+                print(
+                    f"  Created: {cat_data['name']} (level={cat_data.get('commitment_level')})"
+                )
 
                 # Create children if any
                 children = cat_data.get("children", [])

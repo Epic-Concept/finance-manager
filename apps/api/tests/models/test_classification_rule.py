@@ -77,7 +77,7 @@ def test_classification_rule_repr() -> None:
     rule = ClassificationRule(
         id=1,
         name="Test Rule",
-        rule_expression='amount < 0',
+        rule_expression="amount < 0",
         category_id=1,
         priority=5,
     )

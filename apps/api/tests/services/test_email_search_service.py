@@ -230,7 +230,9 @@ class TestEmailSearchServiceBuildQuery:
     """Tests for EmailSearchService.build_search_query()."""
 
     def test_amazon_transaction_query(
-        self, email_account_repo: EmailAccountRepository, amazon_transaction: Transaction
+        self,
+        email_account_repo: EmailAccountRepository,
+        amazon_transaction: Transaction,
     ) -> None:
         """Test building query for Amazon transaction."""
         service = EmailSearchService(email_account_repo, date_range_days=7)
@@ -263,7 +265,9 @@ class TestEmailSearchServiceBuildQuery:
         assert "tesco" in query.subject_keywords
 
     def test_unknown_merchant_query(
-        self, email_account_repo: EmailAccountRepository, unknown_transaction: Transaction
+        self,
+        email_account_repo: EmailAccountRepository,
+        unknown_transaction: Transaction,
     ) -> None:
         """Test building query for unknown merchant."""
         service = EmailSearchService(email_account_repo, date_range_days=7)
@@ -277,7 +281,9 @@ class TestEmailSearchServiceBuildQuery:
         assert "order" in query.subject_keywords
 
     def test_custom_date_range(
-        self, email_account_repo: EmailAccountRepository, amazon_transaction: Transaction
+        self,
+        email_account_repo: EmailAccountRepository,
+        amazon_transaction: Transaction,
     ) -> None:
         """Test custom date range configuration."""
         service = EmailSearchService(email_account_repo, date_range_days=3)
@@ -293,7 +299,9 @@ class TestEmailSearchServiceSearch:
     """Tests for EmailSearchService.search_for_transaction()."""
 
     def test_no_client_raises_error(
-        self, email_account_repo: EmailAccountRepository, amazon_transaction: Transaction
+        self,
+        email_account_repo: EmailAccountRepository,
+        amazon_transaction: Transaction,
     ) -> None:
         """Test that searching without a client raises ValueError."""
         service = EmailSearchService(email_account_repo, email_client=None)
