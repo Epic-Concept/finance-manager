@@ -17,6 +17,10 @@ from finance_api.repositories.email_account_repository import (
     EmailAccountNotFoundError,
     EmailAccountRepository,
 )
+from finance_api.repositories.rule_proposal_repository import (
+    RuleProposalNotFoundError,
+    RuleProposalRepository,
+)
 
 __all__ = [
     "CategoryEvidenceNotFoundError",
@@ -28,4 +32,6 @@ __all__ = [
     "ClassificationRuleRepository",
     "EmailAccountNotFoundError",
     "EmailAccountRepository",
+    "RuleProposalNotFoundError",
+    "RuleProposalRepository",
 ]

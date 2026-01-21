@@ -26,9 +26,24 @@ from finance_api.services.receipt_extraction_service import (
     ReceiptExtractionError,
     ReceiptExtractionService,
 )
+from finance_api.services.rule_discovery_service import (
+    RuleDiscoveryError,
+    RuleDiscoveryService,
+    RuleProposalResult,
+)
+from finance_api.services.rule_validation_service import (
+    ConflictResult,
+    RuleValidationService,
+    ValidationResult,
+)
 from finance_api.services.rules_classification_service import (
     RuleMatch,
     RulesClassificationService,
+)
+from finance_api.services.transaction_clustering_service import (
+    ClusterStatistics,
+    TransactionCluster,
+    TransactionClusteringService,
 )
 
 __all__ = [
@@ -53,7 +68,19 @@ __all__ = [
     "ExtractedReceipt",
     "ReceiptExtractionError",
     "ReceiptExtractionService",
+    # Rule Discovery
+    "RuleDiscoveryError",
+    "RuleDiscoveryService",
+    "RuleProposalResult",
+    # Rule Validation
+    "ConflictResult",
+    "RuleValidationService",
+    "ValidationResult",
     # Rules Classification
     "RuleMatch",
     "RulesClassificationService",
+    # Transaction Clustering
+    "ClusterStatistics",
+    "TransactionCluster",
+    "TransactionClusteringService",
 ]
