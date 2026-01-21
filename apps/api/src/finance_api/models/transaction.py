@@ -44,11 +44,16 @@ class Transaction(Base):
         "OnlinePurchase",
         back_populates="transaction",
     )
+    category_evidence: Mapped[list["CategoryEvidence"]] = relationship(
+        "CategoryEvidence",
+        back_populates="transaction",
+    )
 
     def __repr__(self) -> str:
         return f"<Transaction(id={self.id}, date={self.transaction_date}, amount={self.amount})>"
 
 
 # Import at bottom to avoid circular imports
+from finance_api.models.category_evidence import CategoryEvidence  # noqa: E402
 from finance_api.models.online_purchase import OnlinePurchase  # noqa: E402
 from finance_api.models.transaction_category import TransactionCategory  # noqa: E402

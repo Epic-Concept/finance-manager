@@ -50,6 +50,16 @@ class Category(Base):
         back_populates="ancestor",
     )
 
+    # Classification relationships
+    classification_rules: Mapped[list["ClassificationRule"]] = relationship(
+        "ClassificationRule",
+        back_populates="category",
+    )
+    category_evidence: Mapped[list["CategoryEvidence"]] = relationship(
+        "CategoryEvidence",
+        back_populates="category",
+    )
+
     def __repr__(self) -> str:
         return f"<Category(id={self.id}, name='{self.name}')>"
 
