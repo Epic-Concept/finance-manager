@@ -154,6 +154,74 @@ docker build -t finance-manager-api .
 docker run -p 8000:8000 -e DATABASE_URL="..." finance-manager-api
 ```
 
+## Rule Discovery
+
+The Rule Discovery system helps build classification rules from transaction patterns using LLM assistance.
+
+### Workflow
+
+1. **Analyze clusters** - Group similar transactions by description patterns
+2. **Propose rules** - Use Claude to suggest regex patterns and categories
+3. **Validate rules** - Test precision and false positives before approval
+4. **Apply rules** - Run batch classification on uncategorized transactions
+
+### CLI Commands
+
+#### discover_rules.py
+
+Interactive rule discovery with LLM-powered proposals:
+
+```bash
+cd apps/api
+PYTHONPATH=src ANTHROPIC_API_KEY="..." python -m finance_api.scripts.discover_rules
+```
+
+Options:
+- `--analyze-only`: Show cluster analysis without LLM proposals
+- `--resume`: Continue from pending proposals
+- `--min-cluster-size N`: Minimum transactions per cluster (default: 5)
+- `--max-clusters N`: Maximum clusters to process
+
+Interactive commands during discovery:
+- `A` - Accept the proposed rule
+- `M` - Modify the pattern before accepting
+- `R` - Reject the proposal
+- `S` - Skip (leave pending for later)
+- `Q` - Quit
+
+#### classify_batch.py
+
+Run batch classification using approved rules:
+
+```bash
+cd apps/api
+PYTHONPATH=src python -m finance_api.scripts.classify_batch
+```
+
+Options:
+- `--stats-only`: Show coverage statistics only
+- `--dry-run`: Preview classifications without saving
+- `--limit N`: Maximum transactions to classify
+
+### Typical Workflow
+
+```bash
+# 1. Analyze transaction clusters
+python -m finance_api.scripts.discover_rules --analyze-only
+
+# 2. Run interactive discovery session
+python -m finance_api.scripts.discover_rules --max-clusters 20
+
+# 3. Check coverage statistics
+python -m finance_api.scripts.classify_batch --stats-only
+
+# 4. Apply classifications
+python -m finance_api.scripts.classify_batch
+
+# 5. Resume discovery for more rules
+python -m finance_api.scripts.discover_rules --resume
+```
+
 ## Environment Variables
 
 | Variable | Description | Default |
@@ -162,3 +230,4 @@ docker run -p 8000:8000 -e DATABASE_URL="..." finance-manager-api
 | `HOST` | Server host | `0.0.0.0` |
 | `PORT` | Server port | `8000` |
 | `DEBUG` | Debug mode | `false` |
+| `ANTHROPIC_API_KEY` | API key for Claude (rule discovery) | - |
