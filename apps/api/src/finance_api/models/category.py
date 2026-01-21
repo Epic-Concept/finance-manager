@@ -1,11 +1,16 @@
 """Category and CategoryClosure models for hierarchical category management."""
 
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from finance_api.db.base import Base
+
+if TYPE_CHECKING:
+    from finance_api.models.category_evidence import CategoryEvidence
+    from finance_api.models.classification_rule import ClassificationRule
 
 
 class Category(Base):

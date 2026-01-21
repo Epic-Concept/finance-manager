@@ -2,7 +2,6 @@
 
 from datetime import date, datetime
 from decimal import Decimal
-from unittest.mock import MagicMock, patch
 
 import pytest
 from sqlalchemy.orm import Session
@@ -16,7 +15,6 @@ from finance_api.repositories.category_repository import CategoryRepository
 from finance_api.repositories.email_account_repository import EmailAccountRepository
 from finance_api.services.ai_disambiguation_service import (
     AIDisambiguationService,
-    DisambiguationResult,
 )
 from finance_api.services.category_mapping_service import CategoryMappingService
 from finance_api.services.email_search_service import (
@@ -29,7 +27,6 @@ from finance_api.services.receipt_extraction_service import (
     ExtractedItem,
     ExtractedReceipt,
     ReceiptExtractionError,
-    ReceiptExtractionService,
 )
 
 

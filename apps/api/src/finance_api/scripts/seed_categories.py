@@ -8,7 +8,6 @@ from sqlalchemy import text
 from finance_api.db.session import SessionLocal
 from finance_api.repositories.category_repository import CategoryRepository
 
-
 # Category hierarchy with commitment levels (0-4)
 # 0=Survival, 1=Committed, 2=Lifestyle, 3=Discretionary, 4=Future
 CATEGORY_HIERARCHY = [

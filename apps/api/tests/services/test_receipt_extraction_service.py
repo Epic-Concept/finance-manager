@@ -8,7 +8,6 @@ import pytest
 
 from finance_api.services.email_search_service import EmailMessage
 from finance_api.services.receipt_extraction_service import (
-    ExtractedItem,
     ReceiptExtractionError,
     ReceiptExtractionService,
 )
