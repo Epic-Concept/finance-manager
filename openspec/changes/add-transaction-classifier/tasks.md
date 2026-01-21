@@ -8,7 +8,7 @@
 - [x] 1.4 Update `models/__init__.py` to export new models
 - [x] 1.5 Create Alembic migration for new tables (email_accounts, classification_rules, category_evidence)
 - [x] 1.6 Write unit tests for new models (27 model tests)
-- [ ] 1.7 Run integration tests to verify migration on SQL Server (manual verification needed)
+- [~] 1.7 Run integration tests to verify migration on SQL Server (DEFERRED - requires SQL Server environment)
 
 ## 2. Repositories
 
@@ -30,12 +30,12 @@
 
 ## 4. Email Integration
 
-- [ ] 4.1 Document MCP server setup (imap-mcp) in README (Phase 2)
+- [~] 4.1 Document MCP server setup (imap-mcp) in README (DEFERRED - Phase 2)
 - [x] 4.2 Create `EmailSearchService` in `apps/api/src/finance_api/services/email_search_service.py`
 - [x] 4.3 Implement email account iteration by priority
 - [x] 4.4 Implement date-range and merchant search query building
 - [x] 4.5 Write unit tests with mocked MCP client (17 tests)
-- [ ] 4.6 Write integration test with test email account (manual verification needed)
+- [~] 4.6 Write integration test with test email account (DEFERRED - requires email account setup)
 
 ## 5. AI Disambiguation Service
 
@@ -61,15 +61,17 @@
 - [x] 6.4 Implement idempotency check (skip already classified unless force=True)
 - [x] 6.5 Integrate with FastAPI BackgroundTasks for async disambiguation (implemented but not separately tested)
 - [x] 6.6 Write unit tests for orchestration logic (21 tests)
-- [ ] 6.7 Write end-to-end integration tests (currently uses mocked services)
+- [x] 6.7 Write end-to-end integration tests (9 tests in tests/integration/test_classification_pipeline.py)
 
 ## 7. API Endpoints (Optional - Phase 2)
 
-- [ ] 7.1 Create `/api/v1/classification/rules` CRUD endpoints
-- [ ] 7.2 Create `/api/v1/classification/email-accounts` CRUD endpoints
-- [ ] 7.3 Create `/api/v1/transactions/{id}/classify` endpoint
-- [ ] 7.4 Create `/api/v1/transactions/classify-batch` endpoint
-- [ ] 7.5 Write API endpoint tests
+> DEFERRED: API endpoints will be implemented in Phase 2 when REST interface is needed
+
+- [~] 7.1 Create `/api/v1/classification/rules` CRUD endpoints
+- [~] 7.2 Create `/api/v1/classification/email-accounts` CRUD endpoints
+- [~] 7.3 Create `/api/v1/transactions/{id}/classify` endpoint
+- [~] 7.4 Create `/api/v1/transactions/classify-batch` endpoint
+- [~] 7.5 Write API endpoint tests
 
 ## Dependencies
 
