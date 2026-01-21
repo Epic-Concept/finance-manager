@@ -302,9 +302,7 @@ class TestReceiptExtractionServiceExtract:
     def test_extract_success(self, sample_email: EmailMessage) -> None:
         """Test successful extraction with mocked API."""
         mock_response = MagicMock()
-        mock_response.content = [
-            MagicMock(
-                text="""{
+        mock_response.content = [MagicMock(text="""{
                 "merchant": "Amazon UK",
                 "order_date": "2026-01-15",
                 "items": [
@@ -314,9 +312,7 @@ class TestReceiptExtractionServiceExtract:
                 "shipping_cost": null,
                 "total": 34.98,
                 "currency": "GBP"
-            }"""
-            )
-        ]
+            }""")]
 
         with patch(
             "finance_api.services.receipt_extraction_service.Anthropic"
@@ -353,17 +349,13 @@ class TestReceiptExtractionServiceBatch:
     ) -> None:
         """Test batch extraction with mixed success/failure."""
         mock_response = MagicMock()
-        mock_response.content = [
-            MagicMock(
-                text="""{
+        mock_response.content = [MagicMock(text="""{
                 "merchant": "Amazon",
                 "order_date": "2026-01-15",
                 "items": [{"name": "Item", "price": 10.0}],
                 "total": 10.0,
                 "currency": "GBP"
-            }"""
-            )
-        ]
+            }""")]
 
         call_count = 0
 
