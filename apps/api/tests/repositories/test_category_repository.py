@@ -429,3 +429,201 @@ class TestCategoryRepositorySubtreeSum:
 
         with pytest.raises(CategoryNotFoundError):
             repo.get_subtree_transaction_sum(9999)
+
+
+class TestCategoryRepositoryCommitmentLevel:
+    """Tests for commitment level query methods."""
+
+    def test_get_by_commitment_level(self, db_session: Session) -> None:
+        """Test getting categories by commitment level."""
+        repo = CategoryRepository(db_session)
+
+        # Create categories at different levels
+        repo.create(name="Rent", commitment_level=0)  # Survival
+        repo.create(name="Insurance", commitment_level=1)  # Committed
+        repo.create(name="Gym", commitment_level=2)  # Lifestyle
+        repo.create(name="Movies", commitment_level=3)  # Discretionary
+        repo.create(name="401k", commitment_level=4)  # Future
+        db_session.flush()
+
+        # Test each level
+        survival = repo.get_by_commitment_level(0)
+        assert len(survival) == 1
+        assert survival[0].name == "Rent"
+
+        discretionary = repo.get_by_commitment_level(3)
+        assert len(discretionary) == 1
+        assert discretionary[0].name == "Movies"
+
+    def test_get_by_commitment_level_multiple(self, db_session: Session) -> None:
+        """Test getting multiple categories at same level."""
+        repo = CategoryRepository(db_session)
+
+        # Create multiple survival categories
+        repo.create(name="Electricity", commitment_level=0)
+        repo.create(name="Gas", commitment_level=0)
+        repo.create(name="Water", commitment_level=0)
+        db_session.flush()
+
+        survival = repo.get_by_commitment_level(0)
+
+        assert len(survival) == 3
+        # Should be ordered by name
+        names = [c.name for c in survival]
+        assert names == ["Electricity", "Gas", "Water"]
+
+    def test_get_by_commitment_level_empty(self, db_session: Session) -> None:
+        """Test getting commitment level with no matching categories."""
+        repo = CategoryRepository(db_session)
+
+        # Create only level 0 categories
+        repo.create(name="Rent", commitment_level=0)
+        db_session.flush()
+
+        # Level 4 should be empty
+        future = repo.get_by_commitment_level(4)
+        assert len(future) == 0
+
+    def test_get_effective_commitment_level_direct(self, db_session: Session) -> None:
+        """Test effective commitment level returns category's own level."""
+        repo = CategoryRepository(db_session)
+
+        category = repo.create(name="Rent", commitment_level=0)
+        db_session.flush()
+
+        level = repo.get_effective_commitment_level(category.id)
+        assert level == 0
+
+    def test_get_effective_commitment_level_inherited(
+        self, db_session: Session
+    ) -> None:
+        """Test effective commitment level inherits from parent."""
+        repo = CategoryRepository(db_session)
+
+        # Parent with commitment level
+        parent = repo.create(name="Housing", commitment_level=0)
+        db_session.flush()
+
+        # Child without commitment level
+        child = repo.create(name="Rent", parent_id=parent.id, commitment_level=None)
+        db_session.flush()
+
+        level = repo.get_effective_commitment_level(child.id)
+        assert level == 0  # Inherited from parent
+
+    def test_get_effective_commitment_level_nearest_ancestor(
+        self, db_session: Session
+    ) -> None:
+        """Test effective commitment level uses nearest ancestor with level set."""
+        repo = CategoryRepository(db_session)
+
+        # Grandparent with level 0
+        grandparent = repo.create(name="Housing", commitment_level=0)
+        db_session.flush()
+
+        # Parent with level 2 (overrides grandparent)
+        parent = repo.create(
+            name="Home Improvement", parent_id=grandparent.id, commitment_level=2
+        )
+        db_session.flush()
+
+        # Child without commitment level
+        child = repo.create(name="Paint", parent_id=parent.id, commitment_level=None)
+        db_session.flush()
+
+        level = repo.get_effective_commitment_level(child.id)
+        assert level == 2  # From nearest ancestor (parent), not grandparent
+
+    def test_get_effective_commitment_level_none(self, db_session: Session) -> None:
+        """Test effective commitment level returns None when no ancestor has level."""
+        repo = CategoryRepository(db_session)
+
+        # Category without commitment level
+        category = repo.create(name="Misc", commitment_level=None)
+        db_session.flush()
+
+        level = repo.get_effective_commitment_level(category.id)
+        assert level is None
+
+    def test_get_effective_commitment_level_not_found(
+        self, db_session: Session
+    ) -> None:
+        """Test effective commitment level raises for non-existent category."""
+        repo = CategoryRepository(db_session)
+
+        with pytest.raises(CategoryNotFoundError):
+            repo.get_effective_commitment_level(9999)
+
+
+class TestCategoryRepositoryFrequency:
+    """Tests for frequency query methods."""
+
+    def test_get_by_frequency(self, db_session: Session) -> None:
+        """Test getting categories by frequency."""
+        repo = CategoryRepository(db_session)
+
+        repo.create(name="Rent", frequency="monthly")
+        repo.create(name="Groceries", frequency="weekly")
+        repo.create(name="Property Tax", frequency="annual")
+        db_session.flush()
+
+        monthly = repo.get_by_frequency("monthly")
+        assert len(monthly) == 1
+        assert monthly[0].name == "Rent"
+
+        weekly = repo.get_by_frequency("weekly")
+        assert len(weekly) == 1
+        assert weekly[0].name == "Groceries"
+
+    def test_get_by_frequency_multiple(self, db_session: Session) -> None:
+        """Test getting multiple categories with same frequency."""
+        repo = CategoryRepository(db_session)
+
+        repo.create(name="Electricity", frequency="monthly")
+        repo.create(name="Internet", frequency="monthly")
+        repo.create(name="Phone", frequency="monthly")
+        db_session.flush()
+
+        monthly = repo.get_by_frequency("monthly")
+        assert len(monthly) == 3
+
+    def test_get_by_frequency_empty(self, db_session: Session) -> None:
+        """Test getting frequency with no matching categories."""
+        repo = CategoryRepository(db_session)
+
+        repo.create(name="Rent", frequency="monthly")
+        db_session.flush()
+
+        quarterly = repo.get_by_frequency("quarterly")
+        assert len(quarterly) == 0
+
+
+class TestCategoryRepositoryEssential:
+    """Tests for essential category methods."""
+
+    def test_get_essential_categories(self, db_session: Session) -> None:
+        """Test getting essential categories."""
+        repo = CategoryRepository(db_session)
+
+        repo.create(name="Rent", is_essential=True)
+        repo.create(name="Movies", is_essential=False)
+        repo.create(name="Electricity", is_essential=True)
+        db_session.flush()
+
+        essential = repo.get_essential_categories()
+
+        assert len(essential) == 2
+        names = [c.name for c in essential]
+        assert "Rent" in names
+        assert "Electricity" in names
+        assert "Movies" not in names
+
+    def test_get_essential_categories_empty(self, db_session: Session) -> None:
+        """Test getting essential categories when none are marked."""
+        repo = CategoryRepository(db_session)
+
+        repo.create(name="Movies", is_essential=False)
+        db_session.flush()
+
+        essential = repo.get_essential_categories()
+        assert len(essential) == 0

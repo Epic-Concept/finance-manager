@@ -351,3 +351,91 @@ class CategoryRepository:
 
         result = self._session.execute(stmt).scalar_one()
         return Decimal(result) if result is not None else Decimal("0")
+
+    def get_by_commitment_level(self, commitment_level: int) -> list[Category]:
+        """Get all categories at a specific commitment level.
+
+        Args:
+            commitment_level: The commitment level (0-4).
+                0=Survival, 1=Committed, 2=Lifestyle, 3=Discretionary, 4=Future
+
+        Returns:
+            List of categories with the specified commitment level.
+        """
+        stmt = (
+            select(Category)
+            .where(Category.commitment_level == commitment_level)
+            .order_by(Category.name)
+        )
+        return list(self._session.execute(stmt).scalars().all())
+
+    def get_effective_commitment_level(self, category_id: int) -> int | None:
+        """Get the effective commitment level for a category with inheritance.
+
+        The effective commitment level is determined by:
+        1. The category's own commitment_level if set
+        2. Otherwise, inherit from the nearest ancestor with a commitment_level
+
+        Args:
+            category_id: The category ID.
+
+        Returns:
+            The effective commitment level (0-4), or None if no level is set
+            in the category or any of its ancestors.
+
+        Raises:
+            CategoryNotFoundError: If category doesn't exist.
+        """
+        category = self._session.get(Category, category_id)
+        if category is None:
+            raise CategoryNotFoundError(f"Category {category_id} not found")
+
+        # If category has its own commitment level, return it
+        if category.commitment_level is not None:
+            return category.commitment_level
+
+        # Otherwise, walk up the ancestors (ordered by depth ascending = nearest first)
+        stmt = (
+            select(Category.commitment_level)
+            .join(
+                CategoryClosure,
+                Category.id == CategoryClosure.ancestor_id,
+            )
+            .where(CategoryClosure.descendant_id == category_id)
+            .where(CategoryClosure.depth > 0)  # Exclude self
+            .where(Category.commitment_level.isnot(None))
+            .order_by(CategoryClosure.depth)  # Nearest ancestor first
+            .limit(1)
+        )
+
+        result = self._session.execute(stmt).scalar_one_or_none()
+        return result
+
+    def get_by_frequency(self, frequency: str) -> list[Category]:
+        """Get all categories with a specific frequency.
+
+        Args:
+            frequency: The frequency (monthly, weekly, annual, one-time, etc.).
+
+        Returns:
+            List of categories with the specified frequency.
+        """
+        stmt = (
+            select(Category)
+            .where(Category.frequency == frequency)
+            .order_by(Category.name)
+        )
+        return list(self._session.execute(stmt).scalars().all())
+
+    def get_essential_categories(self) -> list[Category]:
+        """Get all categories marked as essential.
+
+        Returns:
+            List of categories where is_essential is True.
+        """
+        stmt = (
+            select(Category)
+            .where(Category.is_essential == True)  # noqa: E712
+            .order_by(Category.name)
+        )
+        return list(self._session.execute(stmt).scalars().all())
