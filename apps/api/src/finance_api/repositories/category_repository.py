@@ -38,6 +38,9 @@ class CategoryRepository:
         name: str,
         parent_id: int | None = None,
         description: str | None = None,
+        commitment_level: int | None = None,
+        frequency: str | None = None,
+        is_essential: bool = False,
     ) -> Category:
         """Create a category and populate closure table entries.
 
@@ -45,6 +48,9 @@ class CategoryRepository:
             name: The category name.
             parent_id: Optional parent category ID. None for root categories.
             description: Optional category description.
+            commitment_level: Optional commitment level (0-4).
+            frequency: Optional frequency (monthly, weekly, annual, one-time, etc.).
+            is_essential: Whether this category is user-marked as essential.
 
         Returns:
             The created Category.
@@ -63,6 +69,9 @@ class CategoryRepository:
             name=name,
             parent_id=parent_id,
             description=description,
+            commitment_level=commitment_level,
+            frequency=frequency,
+            is_essential=is_essential,
         )
         self._session.add(category)
         self._session.flush()  # Get the ID

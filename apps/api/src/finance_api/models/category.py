@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, Index, Integer, String, Text
+from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from finance_api.db.base import Base
@@ -20,6 +20,12 @@ class Category(Base):
         Integer, ForeignKey("finance.categories.id"), nullable=True
     )
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    commitment_level: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # 0=Survival, 1=Committed, 2=Lifestyle, 3=Discretionary, 4=Future
+    frequency: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    # Values: 'monthly', 'weekly', 'annual', 'one-time', etc.
+    is_essential: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    # User override to mark category as essential
     created_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, default=datetime.utcnow
     )
