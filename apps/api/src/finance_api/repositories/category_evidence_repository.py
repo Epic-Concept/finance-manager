@@ -84,7 +84,9 @@ class CategoryEvidenceRepository:
         self._session.flush()
         return evidence
 
-    def create_batch(self, evidence_list: list[dict]) -> list[CategoryEvidence]:
+    def create_batch(
+        self, evidence_list: list[dict[str, object]]
+    ) -> list[CategoryEvidence]:
         """Create multiple category evidence records.
 
         Args:
