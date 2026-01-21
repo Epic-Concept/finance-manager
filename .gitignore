@@ -98,3 +98,6 @@ alembic/versions/*.pyc
 *.sqlite
 *.mdf
 *.ldf
+
+# Development data (contains sensitive financial data)
+data/

@@ -1,4 +1,4 @@
-.PHONY: install install-api install-web test test-api test-web lint lint-api lint-web format docker-build docker-build-api docker-build-web run clean help db-up db-down db-migrate db-reset
+.PHONY: install install-api install-web test test-api test-web lint lint-api lint-web format docker-build docker-build-api docker-build-web run clean help db-up db-down db-migrate db-reset seed-data seed-data-clear
 
 # Default target
 help:
@@ -24,6 +24,8 @@ help:
 	@echo "  db-down          Stop database container"
 	@echo "  db-migrate       Run database migrations"
 	@echo "  db-reset         Reset database (destroy and recreate)"
+	@echo "  seed-data        Load CSV data into database"
+	@echo "  seed-data-clear  Clear and reload CSV data"
 	@echo ""
 	@echo "  docker-build     Build all Docker images"
 	@echo "  docker-build-api Build API Docker image"
@@ -87,6 +89,13 @@ db-reset:
 	@echo "Waiting for database to be ready..."
 	@sleep 15
 	cd apps/api && alembic upgrade head
+
+# Seed data
+seed-data:
+	cd apps/api && python -m finance_api.scripts.seed_data --data-dir ../../data
+
+seed-data-clear:
+	cd apps/api && python -m finance_api.scripts.seed_data --data-dir ../../data --clear
 
 # Docker
 docker-build: docker-build-api docker-build-web
