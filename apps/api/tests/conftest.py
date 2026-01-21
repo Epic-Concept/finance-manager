@@ -170,8 +170,10 @@ def sqlserver_session(sqlserver_setup) -> Generator[Session, None, None]:
 
         # Clean up data from all tables (in correct order for FK constraints)
         with engine.connect() as conn:
+            conn.execute(text("DELETE FROM finance.rule_proposals"))
             conn.execute(text("DELETE FROM finance.transaction_categories"))
             conn.execute(text("DELETE FROM finance.category_closure"))
+            conn.execute(text("DELETE FROM finance.classification_rules"))
             conn.execute(text("DELETE FROM finance.online_purchases"))
             conn.execute(text("DELETE FROM finance.transactions"))
             conn.execute(text("DELETE FROM finance.categories"))
