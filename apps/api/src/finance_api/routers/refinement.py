@@ -43,22 +43,22 @@ router = APIRouter()
 
 
 def get_session_repo(
-    db: Session = Depends(get_db),
-) -> RefinementSessionRepository:  # noqa: B008
+    db: Session = Depends(get_db),  # noqa: B008
+) -> RefinementSessionRepository:
     """Get refinement session repository."""
     return RefinementSessionRepository(db)
 
 
 def get_category_repo(
-    db: Session = Depends(get_db),
-) -> CategoryRepository:  # noqa: B008
+    db: Session = Depends(get_db),  # noqa: B008
+) -> CategoryRepository:
     """Get category repository."""
     return CategoryRepository(db)
 
 
 def get_rule_repo(
-    db: Session = Depends(get_db),
-) -> ClassificationRuleRepository:  # noqa: B008
+    db: Session = Depends(get_db),  # noqa: B008
+) -> ClassificationRuleRepository:
     """Get classification rule repository."""
     return ClassificationRuleRepository(db)
 
