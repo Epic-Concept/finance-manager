@@ -3,6 +3,7 @@
 import json
 from datetime import datetime
 from decimal import Decimal
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload
@@ -150,7 +151,7 @@ class RefinementSessionRepository:
         session_id: int,
         role: str,
         content: str,
-        proposed_rules: list[dict] | None = None,
+        proposed_rules: list[dict[str, Any]] | None = None,
     ) -> SessionMessage:
         """Add a message to a session's conversation.
 

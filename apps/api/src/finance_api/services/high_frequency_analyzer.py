@@ -133,7 +133,7 @@ class HighFrequencyPatternAnalyzer:
         # Sort by phrase length descending (longest first)
         sorted_by_length = sorted(patterns, key=lambda x: len(x[0]), reverse=True)
 
-        kept_patterns = []
+        kept_patterns: list[tuple[str, int]] = []
         for phrase, count in sorted_by_length:
             # Check if this phrase is a substring of any already-kept pattern
             is_substring = any(phrase in kept[0] for kept in kept_patterns)

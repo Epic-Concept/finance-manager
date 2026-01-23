@@ -6,6 +6,7 @@ Multi-stage classification pipeline:
 """
 
 import argparse
+from typing import Any
 
 from finance_api.db.session import SessionLocal
 from finance_api.models.category import Category
@@ -32,13 +33,14 @@ from finance_api.services.rule_discovery_service import (
     RuleDiscoveryError,
     RuleDiscoveryService,
 )
+from finance_api.services.rule_validation_service import ValidationResult
 from finance_api.services.transaction_clustering_service import (
     TransactionCluster,
     TransactionClusteringService,
 )
 
 
-def get_uncategorized_transactions(db) -> list[Transaction]:  # type: ignore[no-untyped-def]
+def get_uncategorized_transactions(db: Any) -> list[Transaction]:
     """Get all transactions without a category."""
     categorized_ids = (
         db.query(TransactionCategory.transaction_id)
@@ -72,7 +74,7 @@ def display_proposal(
     category_name: str,
     confidence: str,
     reasoning: str,
-    validation,  # type: ignore[no-untyped-def]
+    validation: ValidationResult,
 ) -> None:
     """Display the LLM proposal and validation results."""
     print()
@@ -245,7 +247,7 @@ def run_pattern_detection_stage(
     transactions: list[Transaction],
     categories: list[Category],
     rule_repo: ClassificationRuleRepository,
-    db,  # type: ignore[no-untyped-def]
+    db: Any,
     threshold: float = 0.10,
 ) -> tuple[set[int], list[str]]:
     """Run Stage 1: High-frequency pattern detection.
@@ -402,7 +404,7 @@ def run_interactive_refinement(
     session_repo: RefinementSessionRepository,
     rule_repo: ClassificationRuleRepository,
     refinement_service: InteractiveRefinementService,
-    db,  # type: ignore[no-untyped-def]
+    db: Any,
 ) -> tuple[int, int, bool]:
     """Run interactive refinement for a single cluster.
 
@@ -423,12 +425,14 @@ def run_interactive_refinement(
     display_cluster(cluster, cluster_num, total_clusters)
 
     # Check for existing active session
-    existing_session = session_repo.get_active_by_cluster_hash(cluster.cluster_hash)
+    existing_session = session_repo.get_by_cluster_hash(
+        cluster.cluster_hash, active_only=True
+    )
     if existing_session:
         print(f"\nResuming existing session (ID: {existing_session.id})")
         session = existing_session
         # Get existing messages for context
-        messages = session_repo.get_messages(session.id)
+        messages = session_repo.get_conversation(session.id)
         if messages:
             print("\nPrevious conversation:")
             for msg in messages:
@@ -463,15 +467,15 @@ def run_interactive_refinement(
                         "confidence": p.confidence,
                         "reasoning": p.reasoning,
                     }
-                    for p in response.proposals
+                    for p in response.proposed_rules
                 ],
             )
 
             # Run validation and store proposals
-            if response.proposals:
+            if response.proposed_rules:
                 cluster_ids = {t.id for t in cluster.transactions}
                 validated = refinement_service.validate_proposals(
-                    response.proposals, all_transactions, cluster_ids
+                    response.proposed_rules, all_transactions, cluster_ids
                 )
                 for proposal, validation in validated:
                     # Find category
@@ -484,7 +488,7 @@ def run_interactive_refinement(
                         llm_confidence=proposal.confidence,
                         llm_reasoning=proposal.reasoning,
                         validation_matches=validation.total_matches,
-                        validation_precision=validation.precision,
+                        validation_precision=float(validation.precision),
                         validation_true_positives=validation.true_positives,
                         validation_false_positives=validation.false_positives,
                         sample_false_positives=validation.sample_false_positives,
@@ -517,7 +521,7 @@ def run_interactive_refinement(
         if not session:
             break
 
-        proposals = session_repo.get_proposals(session.id)
+        proposals = session_repo.get_session_proposals(session.id)
         display_session_proposals(proposals)
 
         action = get_refinement_action()
@@ -539,11 +543,11 @@ def run_interactive_refinement(
             # Get LLM response
             print("\nGetting LLM response...")
             try:
-                messages = session_repo.get_messages(session.id)
+                messages = session_repo.get_conversation(session.id)
                 history = [{"role": m.role, "content": m.content} for m in messages]
 
                 response = refinement_service.continue_session(
-                    history=history,
+                    conversation_history=history,
                     user_message=feedback,
                     cluster=cluster,
                     categories=categories,
@@ -562,15 +566,15 @@ def run_interactive_refinement(
                             "confidence": p.confidence,
                             "reasoning": p.reasoning,
                         }
-                        for p in response.proposals
+                        for p in response.proposed_rules
                     ],
                 )
 
                 # Validate and store new proposals
-                if response.proposals:
+                if response.proposed_rules:
                     cluster_ids = {t.id for t in cluster.transactions}
                     validated = refinement_service.validate_proposals(
-                        response.proposals, all_transactions, cluster_ids
+                        response.proposed_rules, all_transactions, cluster_ids
                     )
                     for proposal, validation in validated:
                         # Check if this pattern already exists
@@ -591,7 +595,7 @@ def run_interactive_refinement(
                                 llm_confidence=proposal.confidence,
                                 llm_reasoning=proposal.reasoning,
                                 validation_matches=validation.total_matches,
-                                validation_precision=validation.precision,
+                                validation_precision=float(validation.precision),
                                 validation_true_positives=validation.true_positives,
                                 validation_false_positives=validation.false_positives,
                                 sample_false_positives=validation.sample_false_positives,
@@ -615,27 +619,34 @@ def run_interactive_refinement(
 
         elif action == "A":
             # Accept a proposal
-            proposal = select_proposal(proposals)
-            if proposal:
-                rule = session_repo.accept_proposal(
-                    proposal_id=proposal.id,
-                    rule_repo=rule_repo,
+            selected = select_proposal(proposals)
+            if selected and selected.proposed_category_id:
+                # Create the classification rule
+                rule = rule_repo.create(
+                    name=f"Cluster: {cluster.cluster_key[:40]}",
+                    rule_expression=f'description =~ "{selected.proposed_pattern}"',
+                    category_id=selected.proposed_category_id,
+                    priority=0,
+                )
+                db.flush()
+                # Link the rule to the proposal
+                session_repo.accept_proposal(
+                    proposal_id=selected.id,
+                    final_rule_id=rule.id,
                 )
                 db.commit()
                 accepted_count += 1
                 print(f"✓ Rule created: {rule.name}")
-                print(f"  Pattern: {proposal.proposed_pattern}")
-                print(f"  Category: {proposal.proposed_category_name}")
+                print(f"  Pattern: {selected.proposed_pattern}")
+                print(f"  Category: {selected.proposed_category_name}")
+            elif selected:
+                print("Cannot accept: proposal has no category assigned")
 
         elif action == "R":
             # Reject a proposal
-            proposal = select_proposal(proposals)
-            if proposal:
-                reason = input("Rejection reason (optional): ").strip()
-                session_repo.reject_proposal(
-                    proposal_id=proposal.id,
-                    reviewer_notes=reason or None,
-                )
+            selected = select_proposal(proposals)
+            if selected:
+                session_repo.reject_proposal(proposal_id=selected.id)
                 db.commit()
                 rejected_count += 1
                 print("✗ Proposal rejected")

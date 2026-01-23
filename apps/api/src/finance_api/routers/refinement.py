@@ -1,13 +1,15 @@
 """FastAPI router for interactive refinement endpoints."""
 
 import json
-from typing import Annotated
+from decimal import Decimal
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from finance_api.db.session import get_db
 from finance_api.models.transaction import Transaction
+from finance_api.models.transaction_category import TransactionCategory
 from finance_api.repositories.category_repository import CategoryRepository
 from finance_api.repositories.classification_rule_repository import (
     ClassificationRuleRepository,
@@ -103,9 +105,16 @@ async def create_session(
         return _session_to_response(existing)
 
     # Get uncategorized transactions and cluster them
-    uncategorized = list(
-        db.query(Transaction).filter(Transaction.assigned_category_id.is_(None)).all()
+    # Find transactions that have categories
+    categorized_ids = (
+        db.query(TransactionCategory.transaction_id)
+        .filter(TransactionCategory.category_id.isnot(None))
+        .all()
     )
+    categorized_id_set = {r[0] for r in categorized_ids}
+    # Get all transactions and filter out categorized ones
+    all_txns = list(db.query(Transaction).all())
+    uncategorized = [t for t in all_txns if t.id not in categorized_id_set]
 
     if not uncategorized:
         raise HTTPException(
@@ -135,7 +144,7 @@ async def create_session(
     )
 
     # Get categories and generate initial proposal
-    categories = category_repo.get_all_leaf_categories()
+    categories = category_repo.get_all()
 
     response = refinement_service.start_session(cluster, categories)
 
@@ -148,7 +157,7 @@ async def create_session(
             "confidence": r.confidence,
             "reasoning": r.reasoning,
         }
-        for r in response.proposals
+        for r in response.proposed_rules
     ]
     session_repo.add_message(
         session.id,
@@ -161,7 +170,7 @@ async def create_session(
     all_transactions = list(db.query(Transaction).all())
     cluster_ids = {t.id for t in cluster.transactions}
 
-    for rule in response.proposals:
+    for rule in response.proposed_rules:
         proposal = session_repo.add_proposal(
             session_id=session.id,
             proposed_pattern=rule.pattern,
@@ -192,9 +201,9 @@ async def create_session(
             )
 
     # Add validation feedback as system message
-    if response.proposals:
+    if response.proposed_rules:
         validation_results = refinement_service.validate_proposals(
-            response.proposals, all_transactions, cluster_ids
+            response.proposed_rules, all_transactions, cluster_ids
         )
         feedback = refinement_service.format_validation_feedback(validation_results)
         session_repo.add_message(session.id, "system", feedback)
@@ -305,7 +314,7 @@ async def send_message(
     )
 
     # Get categories and continue conversation
-    categories = category_repo.get_all_leaf_categories()
+    categories = category_repo.get_all()
     response = refinement_service.continue_session(
         history, request.content, cluster, categories
     )
@@ -319,7 +328,7 @@ async def send_message(
             "confidence": r.confidence,
             "reasoning": r.reasoning,
         }
-        for r in response.proposals
+        for r in response.proposed_rules
     ]
     assistant_msg = session_repo.add_message(
         session_id,
@@ -329,10 +338,17 @@ async def send_message(
     )
 
     # Store new proposals if any
-    if response.proposals:
+    if response.proposed_rules:
         # Get transactions for validation
         all_transactions = list(db.query(Transaction).all())
-        uncategorized = [t for t in all_transactions if t.assigned_category_id is None]
+        # Get categorized transaction IDs
+        categorized_ids = (
+            db.query(TransactionCategory.transaction_id)
+            .filter(TransactionCategory.category_id.isnot(None))
+            .all()
+        )
+        categorized_id_set = {r[0] for r in categorized_ids}
+        uncategorized = [t for t in all_transactions if t.id not in categorized_id_set]
         clusters = clustering_service.cluster_transactions(uncategorized)
         cluster_full = next(
             (c for c in clusters if c.cluster_hash == session.cluster_hash),
@@ -342,7 +358,7 @@ async def send_message(
             {t.id for t in cluster_full.transactions} if cluster_full else set()
         )
 
-        for rule in response.proposals:
+        for rule in response.proposed_rules:
             proposal = session_repo.add_proposal(
                 session_id=session_id,
                 proposed_pattern=rule.pattern,
@@ -374,7 +390,7 @@ async def send_message(
 
         # Add validation feedback
         validation_results = refinement_service.validate_proposals(
-            response.proposals, all_transactions, cluster_ids
+            response.proposed_rules, all_transactions, cluster_ids
         )
         feedback = refinement_service.format_validation_feedback(validation_results)
         session_repo.add_message(session_id, "system", feedback)
@@ -455,6 +471,12 @@ async def accept_proposal(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Proposal is already {proposal.status}",
+        )
+
+    if proposal.proposed_category_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Proposal has no category assigned",
         )
 
     # Create classification rule from proposal
@@ -611,7 +633,7 @@ async def list_clusters(
 # --- Helper Functions ---
 
 
-def _session_to_response(session) -> SessionResponse:
+def _session_to_response(session: Any) -> SessionResponse:
     """Convert session model to response schema."""
     return SessionResponse(
         id=session.id,
@@ -628,7 +650,7 @@ def _session_to_response(session) -> SessionResponse:
     )
 
 
-def _message_to_response(message) -> MessageResponse:
+def _message_to_response(message: Any) -> MessageResponse:
     """Convert message model to response schema."""
     proposed_rules = None
     if message.proposed_rules_json:
@@ -654,7 +676,7 @@ def _message_to_response(message) -> MessageResponse:
 
 
 def _proposal_to_response(
-    proposal, category_repo: CategoryRepository
+    proposal: Any, category_repo: CategoryRepository
 ) -> ProposalResponse:
     """Convert proposal model to response schema."""
     # Get category name
@@ -677,8 +699,8 @@ def _proposal_to_response(
             total_matches=proposal.validation_matches,
             true_positives=proposal.validation_true_positives or 0,
             false_positives=proposal.validation_false_positives or 0,
-            precision=proposal.validation_precision or 0,
-            coverage=proposal.validation_coverage or 0,
+            precision=Decimal(str(proposal.validation_precision or 0)),
+            coverage=Decimal(str(proposal.validation_coverage or 0)),
             sample_true_positives=[],
             sample_false_positives=false_positives_list,
             is_valid_regex=True,

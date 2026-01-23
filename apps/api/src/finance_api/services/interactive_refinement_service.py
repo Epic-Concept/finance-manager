@@ -236,7 +236,8 @@ class InteractiveRefinementService:
                     }
                 ],
             )
-            response_text = response.content[0].text
+            first_block = response.content[0]
+            response_text = first_block.text if hasattr(first_block, "text") else ""
             return self._parse_response(response_text, categories)
 
         except Exception as e:
@@ -279,9 +280,10 @@ class InteractiveRefinementService:
                 max_tokens=2048,
                 temperature=self._temperature,
                 system=system_prompt,
-                messages=messages,
+                messages=messages,  # type: ignore[arg-type]
             )
-            response_text = response.content[0].text
+            first_block = response.content[0]
+            response_text = first_block.text if hasattr(first_block, "text") else ""
             return self._parse_response(response_text, categories)
 
         except Exception as e:
