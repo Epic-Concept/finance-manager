@@ -4,8 +4,6 @@ from datetime import date
 from decimal import Decimal
 from unittest.mock import MagicMock
 
-import pytest
-
 from finance_api.models.classification_rule import ClassificationRule
 from finance_api.models.transaction import Transaction
 from finance_api.services.rule_validation_service import (
@@ -271,10 +269,7 @@ class TestSampleFalsePositives:
     def test_limits_samples(self) -> None:
         """Test that samples are limited."""
         service = RuleValidationService()
-        transactions = [
-            create_mock_transaction(i, f"TESCO {i}")
-            for i in range(10)
-        ]
+        transactions = [create_mock_transaction(i, f"TESCO {i}") for i in range(10)]
         cluster_ids: set[int] = set()  # None in cluster
 
         samples = service.sample_false_positives(
@@ -365,9 +360,7 @@ class TestExtractPatternFromExpression:
         """Test extracting simple pattern."""
         service = RuleValidationService()
 
-        pattern = service._extract_pattern_from_expression(
-            'description =~ "(?i)tesco"'
-        )
+        pattern = service._extract_pattern_from_expression('description =~ "(?i)tesco"')
 
         assert pattern == "(?i)tesco"
 

@@ -390,7 +390,12 @@ class RuleDiscoveryService:
         data = self._parse_response(response_text)
 
         # Validate required fields
-        required_fields = ["explanation", "suggested_category", "confidence", "reasoning"]
+        required_fields = [
+            "explanation",
+            "suggested_category",
+            "confidence",
+            "reasoning",
+        ]
         for field in required_fields:
             if field not in data:
                 raise RuleDiscoveryError(f"Missing required field: {field}")

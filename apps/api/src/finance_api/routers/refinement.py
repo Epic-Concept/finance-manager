@@ -42,17 +42,23 @@ from finance_api.services.transaction_clustering_service import (
 router = APIRouter()
 
 
-def get_session_repo(db: Session = Depends(get_db)) -> RefinementSessionRepository:  # noqa: B008
+def get_session_repo(
+    db: Session = Depends(get_db),
+) -> RefinementSessionRepository:  # noqa: B008
     """Get refinement session repository."""
     return RefinementSessionRepository(db)
 
 
-def get_category_repo(db: Session = Depends(get_db)) -> CategoryRepository:  # noqa: B008
+def get_category_repo(
+    db: Session = Depends(get_db),
+) -> CategoryRepository:  # noqa: B008
     """Get category repository."""
     return CategoryRepository(db)
 
 
-def get_rule_repo(db: Session = Depends(get_db)) -> ClassificationRuleRepository:  # noqa: B008
+def get_rule_repo(
+    db: Session = Depends(get_db),
+) -> ClassificationRuleRepository:  # noqa: B008
     """Get classification rule repository."""
     return ClassificationRuleRepository(db)
 
@@ -98,9 +104,7 @@ async def create_session(
 
     # Get uncategorized transactions and cluster them
     uncategorized = list(
-        db.query(Transaction)
-        .filter(Transaction.assigned_category_id.is_(None))
-        .all()
+        db.query(Transaction).filter(Transaction.assigned_category_id.is_(None)).all()
     )
 
     if not uncategorized:
@@ -288,7 +292,9 @@ async def send_message(
 
     # Build conversation history
     messages = session_repo.get_conversation(session_id)
-    history = [{"role": m.role, "content": m.content} for m in messages if m.role != "system"]
+    history = [
+        {"role": m.role, "content": m.content} for m in messages if m.role != "system"
+    ]
 
     # Reconstruct cluster
     cluster = TransactionCluster(
@@ -467,9 +473,7 @@ async def accept_proposal(
     )
     db.commit()
 
-    return _proposal_to_response(
-        session_repo.get_proposal(proposal_id), category_repo
-    )
+    return _proposal_to_response(session_repo.get_proposal(proposal_id), category_repo)
 
 
 @router.post(
@@ -508,9 +512,7 @@ async def reject_proposal(
     session_repo.reject_proposal(proposal_id)
     db.commit()
 
-    return _proposal_to_response(
-        session_repo.get_proposal(proposal_id), category_repo
-    )
+    return _proposal_to_response(session_repo.get_proposal(proposal_id), category_repo)
 
 
 # --- Action Endpoints ---
@@ -570,7 +572,9 @@ async def list_clusters(
 
     uncategorized = list(
         db.query(Transaction)
-        .outerjoin(TransactionCategory, Transaction.id == TransactionCategory.transaction_id)
+        .outerjoin(
+            TransactionCategory, Transaction.id == TransactionCategory.transaction_id
+        )
         .filter(TransactionCategory.id.is_(None))
         .all()
     )
@@ -649,7 +653,9 @@ def _message_to_response(message) -> MessageResponse:
     )
 
 
-def _proposal_to_response(proposal, category_repo: CategoryRepository) -> ProposalResponse:
+def _proposal_to_response(
+    proposal, category_repo: CategoryRepository
+) -> ProposalResponse:
     """Convert proposal model to response schema."""
     # Get category name
     category_name = proposal.proposed_category_name

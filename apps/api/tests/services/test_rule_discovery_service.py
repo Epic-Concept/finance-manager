@@ -83,12 +83,14 @@ class TestParseResponse:
     def test_parses_valid_json(self) -> None:
         """Test parsing valid JSON response."""
         service = RuleDiscoveryService()
-        response = json.dumps({
-            "pattern": "(?i)tesco",
-            "category_name": "Groceries",
-            "confidence": "high",
-            "reasoning": "All Tesco transactions",
-        })
+        response = json.dumps(
+            {
+                "pattern": "(?i)tesco",
+                "category_name": "Groceries",
+                "confidence": "high",
+                "reasoning": "All Tesco transactions",
+            }
+        )
 
         result = service._parse_response(response)
 
@@ -177,12 +179,14 @@ class TestProposeRule:
         mock_response = MagicMock()
         mock_response.content = [
             MagicMock(
-                text=json.dumps({
-                    "pattern": "(?i)tesco",
-                    "category_name": "Groceries",
-                    "confidence": "high",
-                    "reasoning": "All transactions are from Tesco supermarket",
-                })
+                text=json.dumps(
+                    {
+                        "pattern": "(?i)tesco",
+                        "category_name": "Groceries",
+                        "confidence": "high",
+                        "reasoning": "All transactions are from Tesco supermarket",
+                    }
+                )
             )
         ]
         mock_client = MagicMock()
@@ -190,9 +194,7 @@ class TestProposeRule:
         mock_anthropic_class.return_value = mock_client
 
         service = RuleDiscoveryService()
-        cluster = create_mock_cluster(
-            "TESCO", ["TESCO STORES 1234", "TESCO EXPRESS"]
-        )
+        cluster = create_mock_cluster("TESCO", ["TESCO STORES 1234", "TESCO EXPRESS"])
         categories = [create_mock_category(1, "Groceries")]
 
         result = service.propose_rule(cluster, categories)
@@ -244,12 +246,14 @@ class TestRefineRule:
         mock_response = MagicMock()
         mock_response.content = [
             MagicMock(
-                text=json.dumps({
-                    "pattern": "(?i)tesco\\s+store",
-                    "category_name": "Groceries",
-                    "confidence": "high",
-                    "reasoning": "More specific pattern to avoid TESCO BANK",
-                })
+                text=json.dumps(
+                    {
+                        "pattern": "(?i)tesco\\s+store",
+                        "category_name": "Groceries",
+                        "confidence": "high",
+                        "reasoning": "More specific pattern to avoid TESCO BANK",
+                    }
+                )
             )
         ]
         mock_client = MagicMock()
@@ -281,12 +285,14 @@ class TestProposeRulesBatch:
         mock_response = MagicMock()
         mock_response.content = [
             MagicMock(
-                text=json.dumps({
-                    "pattern": "(?i)test",
-                    "category_name": "Test",
-                    "confidence": "high",
-                    "reasoning": "Test",
-                })
+                text=json.dumps(
+                    {
+                        "pattern": "(?i)test",
+                        "category_name": "Test",
+                        "confidence": "high",
+                        "reasoning": "Test",
+                    }
+                )
             )
         ]
         mock_client = MagicMock()
@@ -313,12 +319,14 @@ class TestProposeRulesBatch:
             MagicMock(
                 content=[
                     MagicMock(
-                        text=json.dumps({
-                            "pattern": "(?i)test",
-                            "category_name": "Test",
-                            "confidence": "high",
-                            "reasoning": "Test",
-                        })
+                        text=json.dumps(
+                            {
+                                "pattern": "(?i)test",
+                                "category_name": "Test",
+                                "confidence": "high",
+                                "reasoning": "Test",
+                            }
+                        )
                     )
                 ]
             ),
@@ -395,12 +403,14 @@ class TestExplainPattern:
         mock_response = MagicMock()
         mock_response.content = [
             MagicMock(
-                text=json.dumps({
-                    "explanation": "This is a bank savings round-up feature",
-                    "suggested_category": "Savings",
-                    "confidence": "high",
-                    "reasoning": "Common bank artifact for automatic savings",
-                })
+                text=json.dumps(
+                    {
+                        "explanation": "This is a bank savings round-up feature",
+                        "suggested_category": "Savings",
+                        "confidence": "high",
+                        "reasoning": "Common bank artifact for automatic savings",
+                    }
+                )
             )
         ]
         mock_client = MagicMock()
@@ -424,19 +434,19 @@ class TestExplainPattern:
         assert "savings" in result.reasoning.lower()
 
     @patch("finance_api.services.rule_discovery_service.Anthropic")
-    def test_handles_category_not_found(
-        self, mock_anthropic_class: MagicMock
-    ) -> None:
+    def test_handles_category_not_found(self, mock_anthropic_class: MagicMock) -> None:
         """Test handling when suggested category is not in list."""
         mock_response = MagicMock()
         mock_response.content = [
             MagicMock(
-                text=json.dumps({
-                    "explanation": "This is a subscription service",
-                    "suggested_category": "Entertainment",
-                    "confidence": "medium",
-                    "reasoning": "Looks like streaming service",
-                })
+                text=json.dumps(
+                    {
+                        "explanation": "This is a subscription service",
+                        "suggested_category": "Entertainment",
+                        "confidence": "medium",
+                        "reasoning": "Looks like streaming service",
+                    }
+                )
             )
         ]
         mock_client = MagicMock()
@@ -497,10 +507,12 @@ class TestExplainPattern:
         mock_response = MagicMock()
         mock_response.content = [
             MagicMock(
-                text=json.dumps({
-                    "explanation": "Some explanation",
-                    # Missing: suggested_category, confidence, reasoning
-                })
+                text=json.dumps(
+                    {
+                        "explanation": "Some explanation",
+                        # Missing: suggested_category, confidence, reasoning
+                    }
+                )
             )
         ]
         mock_client = MagicMock()
@@ -517,19 +529,19 @@ class TestExplainPattern:
         assert "Missing required field" in str(exc_info.value)
 
     @patch("finance_api.services.rule_discovery_service.Anthropic")
-    def test_handles_invalid_confidence(
-        self, mock_anthropic_class: MagicMock
-    ) -> None:
+    def test_handles_invalid_confidence(self, mock_anthropic_class: MagicMock) -> None:
         """Test handling of invalid confidence level."""
         mock_response = MagicMock()
         mock_response.content = [
             MagicMock(
-                text=json.dumps({
-                    "explanation": "Test",
-                    "suggested_category": "Test",
-                    "confidence": "very_high",  # Invalid
-                    "reasoning": "Test",
-                })
+                text=json.dumps(
+                    {
+                        "explanation": "Test",
+                        "suggested_category": "Test",
+                        "confidence": "very_high",  # Invalid
+                        "reasoning": "Test",
+                    }
+                )
             )
         ]
         mock_client = MagicMock()
@@ -553,12 +565,14 @@ class TestExplainPattern:
         mock_response = MagicMock()
         mock_response.content = [
             MagicMock(
-                text=json.dumps({
-                    "explanation": "Test",
-                    "suggested_category": "SAVINGS",  # Uppercase
-                    "confidence": "high",
-                    "reasoning": "Test",
-                })
+                text=json.dumps(
+                    {
+                        "explanation": "Test",
+                        "suggested_category": "SAVINGS",  # Uppercase
+                        "confidence": "high",
+                        "reasoning": "Test",
+                    }
+                )
             )
         ]
         mock_client = MagicMock()
@@ -604,7 +618,7 @@ class TestPatternExplanationDataclass:
             suggested_category_id=None,
             confidence="low",
             reasoning="Not sure",
-            raw_response='{}',
+            raw_response="{}",
         )
 
         assert explanation.suggested_category_id is None

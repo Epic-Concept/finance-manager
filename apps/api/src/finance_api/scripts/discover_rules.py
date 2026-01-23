@@ -109,7 +109,9 @@ def display_session_proposals(proposals: list[SessionRuleProposal]) -> None:
         precision = float(proposal.validation_precision or 0) * 100
         print(f"  [{i}] {proposal.proposed_pattern}")
         print(f"      → {proposal.proposed_category_name} ({proposal.llm_confidence})")
-        print(f"      Matches: {proposal.validation_matches}, Precision: {precision:.0f}%")
+        print(
+            f"      Matches: {proposal.validation_matches}, Precision: {precision:.0f}%"
+        )
 
 
 def get_refinement_action() -> str:
@@ -174,7 +176,9 @@ def display_pattern(
     print("=" * 60)
     print(f"=== Pattern #{pattern_num}/{total_patterns} ===")
     print(f'Pattern: "{pattern.phrase}"')
-    print(f"Appears in: {pattern.transaction_count} transactions ({pattern.frequency:.1%})")
+    print(
+        f"Appears in: {pattern.transaction_count} transactions ({pattern.frequency:.1%})"
+    )
     print()
     print("Sample transactions:")
     for sample in pattern.sample_descriptions:
@@ -571,7 +575,9 @@ def run_interactive_refinement(
                     for proposal, validation in validated:
                         # Check if this pattern already exists
                         existing = [
-                            p for p in proposals if p.proposed_pattern == proposal.pattern
+                            p
+                            for p in proposals
+                            if p.proposed_pattern == proposal.pattern
                         ]
                         if not existing:
                             category = find_category_by_name(

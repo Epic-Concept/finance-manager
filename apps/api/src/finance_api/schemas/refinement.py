@@ -5,14 +5,15 @@ from decimal import Decimal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-
 # --- Session Schemas ---
 
 
 class SessionCreate(BaseModel):
     """Request to create a new refinement session."""
 
-    cluster_hash: str = Field(..., description="Hash identifying the transaction cluster")
+    cluster_hash: str = Field(
+        ..., description="Hash identifying the transaction cluster"
+    )
 
 
 class SessionResponse(BaseModel):

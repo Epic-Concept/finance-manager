@@ -47,7 +47,9 @@ class SessionRuleProposal(Base):
 
     # Validation results (populated after validation)
     validation_matches: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    validation_true_positives: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    validation_true_positives: Mapped[int | None] = mapped_column(
+        Integer, nullable=True
+    )
     validation_false_positives: Mapped[int | None] = mapped_column(
         Integer, nullable=True
     )

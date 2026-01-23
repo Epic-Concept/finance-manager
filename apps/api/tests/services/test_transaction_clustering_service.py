@@ -4,11 +4,8 @@ from datetime import date
 from decimal import Decimal
 from unittest.mock import MagicMock
 
-import pytest
-
 from finance_api.models.transaction import Transaction
 from finance_api.services.transaction_clustering_service import (
-    ClusterStatistics,
     TransactionCluster,
     TransactionClusteringService,
 )
@@ -530,9 +527,7 @@ class TestStripPatterns:
 
     def test_strips_pattern_from_description(self) -> None:
         """Test that strip patterns are removed from descriptions."""
-        service = TransactionClusteringService(
-            strip_patterns=["ZAKUP PRZY KARTY"]
-        )
+        service = TransactionClusteringService(strip_patterns=["ZAKUP PRZY KARTY"])
 
         result = service.normalize_description("TESCO ZAKUP PRZY KARTY 123")
 
@@ -554,9 +549,7 @@ class TestStripPatterns:
 
     def test_strip_is_case_insensitive(self) -> None:
         """Test that strip patterns work case-insensitively."""
-        service = TransactionClusteringService(
-            strip_patterns=["pattern text"]
-        )
+        service = TransactionClusteringService(strip_patterns=["pattern text"])
 
         result = service.normalize_description("DATA PATTERN TEXT HERE")
 
@@ -589,8 +582,7 @@ class TestStripPatterns:
     def test_clustering_with_strip_patterns(self) -> None:
         """Test that clustering works correctly with strip patterns."""
         service = TransactionClusteringService(
-            min_cluster_size=2,
-            strip_patterns=["ZAKUP PRZY KARTY"]
+            min_cluster_size=2, strip_patterns=["ZAKUP PRZY KARTY"]
         )
 
         transactions = [

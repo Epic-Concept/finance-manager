@@ -1,11 +1,8 @@
 """Integration tests for refinement router."""
 
-import os
-import tempfile
-
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine, event, text
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
@@ -45,7 +42,9 @@ def test_engine():
 @pytest.fixture
 def in_memory_db(test_engine):
     """Create an in-memory database session for testing."""
-    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
+    TestingSessionLocal = sessionmaker(
+        autocommit=False, autoflush=False, bind=test_engine
+    )
     session = TestingSessionLocal()
     try:
         yield session
@@ -56,7 +55,9 @@ def in_memory_db(test_engine):
 @pytest.fixture
 def client_with_db(in_memory_db: Session, test_engine):
     """Create test client with database override."""
-    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
+    TestingSessionLocal = sessionmaker(
+        autocommit=False, autoflush=False, bind=test_engine
+    )
 
     def override_get_db():
         session = TestingSessionLocal()
@@ -176,7 +177,9 @@ class TestListSessions:
         assert data["total"] == 1
         assert data["sessions"][0]["cluster_hash"] == "abc123"
 
-    def test_list_sessions_with_status_filter(self, client_with_db, sample_session, in_memory_db):
+    def test_list_sessions_with_status_filter(
+        self, client_with_db, sample_session, in_memory_db
+    ):
         """Test filtering sessions by status."""
         # Create a completed session
         completed = RefinementSession(
@@ -202,7 +205,9 @@ class TestGetSession:
 
     def test_get_session_exists(self, client_with_db, sample_session):
         """Test getting an existing session."""
-        response = client_with_db.get(f"/api/v1/refinement/sessions/{sample_session.id}")
+        response = client_with_db.get(
+            f"/api/v1/refinement/sessions/{sample_session.id}"
+        )
         assert response.status_code == 200
         data = response.json()
         assert data["id"] == sample_session.id
@@ -239,15 +244,21 @@ class TestGetConversation:
 
     def test_get_conversation_empty(self, client_with_db, sample_session):
         """Test getting conversation with no messages."""
-        response = client_with_db.get(f"/api/v1/refinement/sessions/{sample_session.id}/messages")
+        response = client_with_db.get(
+            f"/api/v1/refinement/sessions/{sample_session.id}/messages"
+        )
         assert response.status_code == 200
         data = response.json()
         assert data["session_id"] == sample_session.id
         assert data["messages"] == []
 
-    def test_get_conversation_with_messages(self, client_with_db, session_with_messages):
+    def test_get_conversation_with_messages(
+        self, client_with_db, session_with_messages
+    ):
         """Test getting conversation with messages."""
-        response = client_with_db.get(f"/api/v1/refinement/sessions/{session_with_messages.id}/messages")
+        response = client_with_db.get(
+            f"/api/v1/refinement/sessions/{session_with_messages.id}/messages"
+        )
         assert response.status_code == 200
         data = response.json()
         assert len(data["messages"]) == 1
@@ -259,7 +270,9 @@ class TestListProposals:
 
     def test_list_proposals_empty(self, client_with_db, sample_session):
         """Test listing proposals when none exist."""
-        response = client_with_db.get(f"/api/v1/refinement/sessions/{sample_session.id}/proposals")
+        response = client_with_db.get(
+            f"/api/v1/refinement/sessions/{sample_session.id}/proposals"
+        )
         assert response.status_code == 200
         data = response.json()
         assert data == []
@@ -267,7 +280,9 @@ class TestListProposals:
     def test_list_proposals_with_data(self, client_with_db, session_with_proposal):
         """Test listing proposals with existing data."""
         session, proposal = session_with_proposal
-        response = client_with_db.get(f"/api/v1/refinement/sessions/{session.id}/proposals")
+        response = client_with_db.get(
+            f"/api/v1/refinement/sessions/{session.id}/proposals"
+        )
         assert response.status_code == 200
         data = response.json()
         assert len(data) == 1
@@ -277,7 +292,9 @@ class TestListProposals:
 class TestAcceptProposal:
     """Tests for POST /api/v1/refinement/sessions/{session_id}/proposals/{proposal_id}/accept."""
 
-    def test_accept_proposal_success(self, client_with_db, session_with_proposal, in_memory_db):
+    def test_accept_proposal_success(
+        self, client_with_db, session_with_proposal, in_memory_db
+    ):
         """Test accepting a proposal creates a rule."""
         session, proposal = session_with_proposal
         response = client_with_db.post(
@@ -296,7 +313,9 @@ class TestAcceptProposal:
         )
         assert response.status_code == 404
 
-    def test_accept_proposal_wrong_session(self, client_with_db, session_with_proposal, in_memory_db):
+    def test_accept_proposal_wrong_session(
+        self, client_with_db, session_with_proposal, in_memory_db
+    ):
         """Test accepting a proposal from wrong session."""
         session, proposal = session_with_proposal
         # Create another session
@@ -320,7 +339,9 @@ class TestAcceptProposal:
 class TestRejectProposal:
     """Tests for POST /api/v1/refinement/sessions/{session_id}/proposals/{proposal_id}/reject."""
 
-    def test_reject_proposal_success(self, client_with_db, session_with_proposal, in_memory_db):
+    def test_reject_proposal_success(
+        self, client_with_db, session_with_proposal, in_memory_db
+    ):
         """Test rejecting a proposal."""
         session, proposal = session_with_proposal
         response = client_with_db.post(
@@ -335,7 +356,9 @@ class TestRejectProposal:
 class TestCompleteSession:
     """Tests for POST /api/v1/refinement/sessions/{session_id}/actions/complete."""
 
-    def test_complete_session_success(self, client_with_db, sample_session, in_memory_db):
+    def test_complete_session_success(
+        self, client_with_db, sample_session, in_memory_db
+    ):
         """Test completing a session."""
         response = client_with_db.post(
             f"/api/v1/refinement/sessions/{sample_session.id}/actions/complete"
@@ -346,7 +369,9 @@ class TestCompleteSession:
 
     def test_complete_session_not_found(self, client_with_db):
         """Test completing a non-existent session."""
-        response = client_with_db.post("/api/v1/refinement/sessions/9999/actions/complete")
+        response = client_with_db.post(
+            "/api/v1/refinement/sessions/9999/actions/complete"
+        )
         assert response.status_code == 404
 
 

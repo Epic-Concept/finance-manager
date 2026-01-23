@@ -1,7 +1,5 @@
 """Tests for seed_categories script and CATEGORY_HIERARCHY data structure."""
 
-import pytest
-
 from finance_api.scripts.seed_categories import CATEGORY_HIERARCHY
 
 # Valid values for seed data
@@ -99,7 +97,7 @@ class TestCategoryHierarchyCounts:
     def test_categories_per_commitment_level(self) -> None:
         """Test distribution of categories across commitment levels."""
         all_cats = get_all_categories(CATEGORY_HIERARCHY)
-        counts_per_level = {i: 0 for i in range(5)}
+        counts_per_level = dict.fromkeys(range(5), 0)
 
         for cat in all_cats:
             counts_per_level[cat["commitment_level"]] += 1

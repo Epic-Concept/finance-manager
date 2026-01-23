@@ -56,7 +56,9 @@ class TestHighFrequencyPatternInit:
         with pytest.raises(ValueError, match="min_phrase_words must be at least 1"):
             HighFrequencyPatternAnalyzer(min_phrase_words=0)
 
-        with pytest.raises(ValueError, match="max_phrase_words must be >= min_phrase_words"):
+        with pytest.raises(
+            ValueError, match="max_phrase_words must be >= min_phrase_words"
+        ):
             HighFrequencyPatternAnalyzer(min_phrase_words=5, max_phrase_words=3)
 
 
@@ -240,9 +242,7 @@ class TestAnalyze:
 
     def test_detects_high_frequency_pattern(self) -> None:
         """Test detection of a pattern above threshold."""
-        analyzer = HighFrequencyPatternAnalyzer(
-            threshold=0.10, min_phrase_length=10
-        )
+        analyzer = HighFrequencyPatternAnalyzer(threshold=0.10, min_phrase_length=10)
 
         # Create 100 transactions, 15 with the same pattern
         transactions = []
@@ -263,16 +263,12 @@ class TestAnalyze:
 
     def test_excludes_below_threshold_pattern(self) -> None:
         """Test that patterns below threshold are excluded."""
-        analyzer = HighFrequencyPatternAnalyzer(
-            threshold=0.20, min_phrase_length=10
-        )
+        analyzer = HighFrequencyPatternAnalyzer(threshold=0.20, min_phrase_length=10)
 
         # Create 100 transactions, only 5 with the pattern (5% < 20%)
         transactions = []
         for i in range(5):
-            transactions.append(
-                create_mock_transaction(i, f"ZAKUP PRZY KARTY {i}")
-            )
+            transactions.append(create_mock_transaction(i, f"ZAKUP PRZY KARTY {i}"))
         for i in range(5, 100):
             transactions.append(
                 create_mock_transaction(i, f"UNIQUE DESC {i} SOMETHING")
@@ -286,20 +282,14 @@ class TestAnalyze:
 
     def test_calculates_correct_frequency(self) -> None:
         """Test that frequency is calculated correctly."""
-        analyzer = HighFrequencyPatternAnalyzer(
-            threshold=0.10, min_phrase_length=10
-        )
+        analyzer = HighFrequencyPatternAnalyzer(threshold=0.10, min_phrase_length=10)
 
         # 20 transactions with pattern, 80 without = 20%
         transactions = []
         for i in range(20):
-            transactions.append(
-                create_mock_transaction(i, f"PATTERN PHRASE HERE {i}")
-            )
+            transactions.append(create_mock_transaction(i, f"PATTERN PHRASE HERE {i}"))
         for i in range(20, 100):
-            transactions.append(
-                create_mock_transaction(i, f"DIFFERENT TEXT {i}")
-            )
+            transactions.append(create_mock_transaction(i, f"DIFFERENT TEXT {i}"))
 
         patterns = analyzer.analyze(transactions)
 
@@ -316,13 +306,9 @@ class TestAnalyze:
 
         transactions = []
         for i in range(20):
-            transactions.append(
-                create_mock_transaction(i, f"PATTERN PHRASE HERE {i}")
-            )
+            transactions.append(create_mock_transaction(i, f"PATTERN PHRASE HERE {i}"))
         for i in range(20, 100):
-            transactions.append(
-                create_mock_transaction(i, f"DIFFERENT TEXT {i}")
-            )
+            transactions.append(create_mock_transaction(i, f"DIFFERENT TEXT {i}"))
 
         patterns = analyzer.analyze(transactions)
 
@@ -356,26 +342,18 @@ class TestAnalyze:
 
     def test_sorts_by_frequency_descending(self) -> None:
         """Test that patterns are sorted by frequency."""
-        analyzer = HighFrequencyPatternAnalyzer(
-            threshold=0.10, min_phrase_length=10
-        )
+        analyzer = HighFrequencyPatternAnalyzer(threshold=0.10, min_phrase_length=10)
 
         transactions = []
         # 30 with pattern A
         for i in range(30):
-            transactions.append(
-                create_mock_transaction(i, f"FIRST PATTERN HERE {i}")
-            )
+            transactions.append(create_mock_transaction(i, f"FIRST PATTERN HERE {i}"))
         # 20 with pattern B
         for i in range(30, 50):
-            transactions.append(
-                create_mock_transaction(i, f"SECOND PATTERN HERE {i}")
-            )
+            transactions.append(create_mock_transaction(i, f"SECOND PATTERN HERE {i}"))
         # 50 unique
         for i in range(50, 100):
-            transactions.append(
-                create_mock_transaction(i, f"UNIQUE TEXT NUMBER {i}")
-            )
+            transactions.append(create_mock_transaction(i, f"UNIQUE TEXT NUMBER {i}"))
 
         patterns = analyzer.analyze(transactions)
 

@@ -138,12 +138,8 @@ class TestRuleProposalRepositoryGetByStatus:
         """Test getting all pending proposals."""
         repo = RuleProposalRepository(db_session)
 
-        repo.create(
-            cluster_hash="pending1", cluster_size=10, sample_descriptions="[]"
-        )
-        repo.create(
-            cluster_hash="pending2", cluster_size=20, sample_descriptions="[]"
-        )
+        repo.create(cluster_hash="pending1", cluster_size=10, sample_descriptions="[]")
+        repo.create(cluster_hash="pending2", cluster_size=20, sample_descriptions="[]")
         repo.create(
             cluster_hash="rejected1",
             cluster_size=30,
@@ -167,9 +163,7 @@ class TestRuleProposalRepositoryGetByStatus:
             sample_descriptions="[]",
             status="accepted",
         )
-        repo.create(
-            cluster_hash="pending1", cluster_size=20, sample_descriptions="[]"
-        )
+        repo.create(cluster_hash="pending1", cluster_size=20, sample_descriptions="[]")
         db_session.flush()
 
         accepted = repo.get_by_status("accepted")
@@ -185,12 +179,8 @@ class TestRuleProposalRepositoryGetPendingProposals:
         """Test getting pending proposals for resume functionality."""
         repo = RuleProposalRepository(db_session)
 
-        repo.create(
-            cluster_hash="resume1", cluster_size=10, sample_descriptions="[]"
-        )
-        repo.create(
-            cluster_hash="resume2", cluster_size=20, sample_descriptions="[]"
-        )
+        repo.create(cluster_hash="resume1", cluster_size=10, sample_descriptions="[]")
+        repo.create(cluster_hash="resume2", cluster_size=20, sample_descriptions="[]")
         repo.create(
             cluster_hash="done1",
             cluster_size=30,
@@ -361,9 +351,7 @@ class TestRuleProposalRepositoryUpdateValidation:
 class TestRuleProposalRepositoryUpdatePattern:
     """Tests for RuleProposalRepository.update_pattern()."""
 
-    def test_update_pattern(
-        self, db_session: Session, test_category: Category
-    ) -> None:
+    def test_update_pattern(self, db_session: Session, test_category: Category) -> None:
         """Test updating the proposed pattern."""
         repo = RuleProposalRepository(db_session)
         proposal = repo.create(
@@ -444,12 +432,8 @@ class TestRuleProposalRepositoryCountByStatus:
         """Test counting with various statuses."""
         repo = RuleProposalRepository(db_session)
 
-        repo.create(
-            cluster_hash="p1", cluster_size=10, sample_descriptions="[]"
-        )
-        repo.create(
-            cluster_hash="p2", cluster_size=10, sample_descriptions="[]"
-        )
+        repo.create(cluster_hash="p1", cluster_size=10, sample_descriptions="[]")
+        repo.create(cluster_hash="p2", cluster_size=10, sample_descriptions="[]")
         repo.create(
             cluster_hash="a1",
             cluster_size=10,
@@ -487,15 +471,9 @@ class TestRuleProposalRepositoryGetAll:
         """Test get_all with multiple proposals."""
         repo = RuleProposalRepository(db_session)
 
-        repo.create(
-            cluster_hash="all1", cluster_size=10, sample_descriptions="[]"
-        )
-        repo.create(
-            cluster_hash="all2", cluster_size=20, sample_descriptions="[]"
-        )
-        repo.create(
-            cluster_hash="all3", cluster_size=30, sample_descriptions="[]"
-        )
+        repo.create(cluster_hash="all1", cluster_size=10, sample_descriptions="[]")
+        repo.create(cluster_hash="all2", cluster_size=20, sample_descriptions="[]")
+        repo.create(cluster_hash="all3", cluster_size=30, sample_descriptions="[]")
         db_session.flush()
 
         all_proposals = repo.get_all()
