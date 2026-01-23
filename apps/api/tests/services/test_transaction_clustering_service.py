@@ -523,3 +523,85 @@ class TestTransactionCluster:
         )
 
         assert cluster.size == 0
+
+
+class TestStripPatterns:
+    """Tests for strip patterns functionality."""
+
+    def test_strips_pattern_from_description(self) -> None:
+        """Test that strip patterns are removed from descriptions."""
+        service = TransactionClusteringService(
+            strip_patterns=["ZAKUP PRZY KARTY"]
+        )
+
+        result = service.normalize_description("TESCO ZAKUP PRZY KARTY 123")
+
+        assert "ZAKUP PRZY KARTY" not in result
+        assert "TESCO" in result
+
+    def test_strips_multiple_patterns(self) -> None:
+        """Test stripping multiple patterns."""
+        service = TransactionClusteringService(
+            strip_patterns=["PATTERN ONE", "PATTERN TWO"]
+        )
+
+        result = service.normalize_description("DATA PATTERN ONE PATTERN TWO END")
+
+        assert "PATTERN ONE" not in result
+        assert "PATTERN TWO" not in result
+        assert "DATA" in result
+        assert "END" in result
+
+    def test_strip_is_case_insensitive(self) -> None:
+        """Test that strip patterns work case-insensitively."""
+        service = TransactionClusteringService(
+            strip_patterns=["pattern text"]
+        )
+
+        result = service.normalize_description("DATA PATTERN TEXT HERE")
+
+        assert "PATTERN TEXT" not in result
+
+    def test_no_strip_patterns_by_default(self) -> None:
+        """Test that no patterns are stripped by default."""
+        service = TransactionClusteringService()
+
+        result = service.normalize_description("TESCO ZAKUP PRZY KARTY")
+
+        assert "ZAKUP" in result
+        assert "PRZY" in result
+        assert "KARTY" in result
+
+    def test_cluster_key_after_stripping(self) -> None:
+        """Test that cluster key changes after stripping prefix pattern."""
+        # Without stripping
+        service_no_strip = TransactionClusteringService()
+        key_no_strip = service_no_strip.extract_cluster_key("ZAKUP TESCO STORES")
+
+        # With stripping
+        service_strip = TransactionClusteringService(strip_patterns=["ZAKUP"])
+        key_strip = service_strip.extract_cluster_key("ZAKUP TESCO STORES")
+
+        # Without strip, key is "ZAKUP", with strip, key is "TESCO"
+        assert key_no_strip == "ZAKUP"
+        assert key_strip == "TESCO"
+
+    def test_clustering_with_strip_patterns(self) -> None:
+        """Test that clustering works correctly with strip patterns."""
+        service = TransactionClusteringService(
+            min_cluster_size=2,
+            strip_patterns=["ZAKUP PRZY KARTY"]
+        )
+
+        transactions = [
+            create_mock_transaction(1, "ZAKUP PRZY KARTY TESCO 123"),
+            create_mock_transaction(2, "ZAKUP PRZY KARTY TESCO 456"),
+            create_mock_transaction(3, "AMAZON UK"),
+        ]
+
+        clusters = service.cluster_transactions(transactions)
+
+        # TESCO should cluster together, AMAZON alone won't meet min_size
+        assert len(clusters) == 1
+        assert clusters[0].cluster_key == "TESCO"
+        assert clusters[0].size == 2

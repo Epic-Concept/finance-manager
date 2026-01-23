@@ -7,7 +7,20 @@ from typing import Any
 from anthropic import Anthropic
 
 from finance_api.models.category import Category
+from finance_api.services.high_frequency_analyzer import HighFrequencyPattern
 from finance_api.services.transaction_clustering_service import TransactionCluster
+
+
+@dataclass
+class PatternExplanation:
+    """LLM's explanation of a detected high-frequency pattern."""
+
+    explanation: str  # What this pattern means
+    suggested_category: str  # Suggested category name
+    suggested_category_id: int | None  # Category ID if matched
+    confidence: str  # high/medium/low
+    reasoning: str  # Why this category
+    raw_response: str  # Raw LLM response
 
 
 @dataclass
@@ -59,6 +72,33 @@ Respond in this exact JSON format (no other text):
 JSON response:"""
 
 
+PATTERN_EXPLANATION_PROMPT = """You are a financial transaction analyst. A pattern has been detected that appears in many transactions from a personal bank account.
+
+Pattern: "{pattern}"
+Appears in {count} transactions ({frequency:.1%} of all transactions)
+
+Sample transactions containing this pattern:
+{samples}
+
+Available categories:
+{categories}
+
+Please analyze this pattern and explain:
+1. What does this pattern mean? (Is it a bank feature like savings round-up, automatic transfer, merchant name, etc.)
+2. What category should transactions with this pattern be assigned to?
+3. Why is this the appropriate category?
+
+Respond in this exact JSON format (no other text):
+{{
+    "explanation": "Brief explanation of what this pattern represents",
+    "suggested_category": "Exact category name from the list",
+    "confidence": "high|medium|low",
+    "reasoning": "Why this category is appropriate"
+}}
+
+JSON response:"""
+
+
 REFINEMENT_PROMPT = """You are a transaction classification expert. A previous rule proposal was rejected, and you need to propose an improved version.
 
 Original cluster samples:
@@ -97,7 +137,7 @@ class RuleDiscoveryService:
     def __init__(
         self,
         api_key: str | None = None,
-        model: str = "claude-sonnet-4-5-20250514",
+        model: str = "claude-opus-4-5-20251101",
         temperature: float = 0.0,
     ) -> None:
         """Initialize the service.
@@ -308,6 +348,75 @@ class RuleDiscoveryService:
             except RuleDiscoveryError as e:
                 results.append(e)
         return results
+
+    def explain_pattern(
+        self,
+        pattern: HighFrequencyPattern,
+        categories: list[Category],
+        total_transactions: int,
+    ) -> PatternExplanation:
+        """Ask LLM to explain a detected high-frequency pattern.
+
+        Args:
+            pattern: The detected pattern to explain.
+            categories: List of available categories.
+            total_transactions: Total number of transactions for frequency calculation.
+
+        Returns:
+            PatternExplanation with the LLM's analysis.
+
+        Raises:
+            RuleDiscoveryError: If explanation fails.
+        """
+        prompt = PATTERN_EXPLANATION_PROMPT.format(
+            pattern=pattern.phrase,
+            count=pattern.transaction_count,
+            frequency=pattern.frequency,
+            samples=self._format_samples(pattern.sample_descriptions),
+            categories=self._format_categories(categories),
+        )
+
+        try:
+            response = self._client.messages.create(
+                model=self._model,
+                max_tokens=1024,
+                temperature=self._temperature,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            response_text = response.content[0].text  # type: ignore[union-attr]
+        except Exception as e:
+            raise RuleDiscoveryError(f"LLM API call failed: {e}") from e
+
+        data = self._parse_response(response_text)
+
+        # Validate required fields
+        required_fields = ["explanation", "suggested_category", "confidence", "reasoning"]
+        for field in required_fields:
+            if field not in data:
+                raise RuleDiscoveryError(f"Missing required field: {field}")
+
+        if data["confidence"] not in ("high", "medium", "low"):
+            raise RuleDiscoveryError(
+                f"Invalid confidence level: {data['confidence']}. "
+                "Must be high, medium, or low."
+            )
+
+        # Try to match category name to ID
+        suggested_category_id: int | None = None
+        suggested_category_name = str(data["suggested_category"])
+        for cat in categories:
+            if cat.name.lower() == suggested_category_name.lower():
+                suggested_category_id = cat.id
+                break
+
+        return PatternExplanation(
+            explanation=str(data["explanation"]),
+            suggested_category=suggested_category_name,
+            suggested_category_id=suggested_category_id,
+            confidence=str(data["confidence"]),
+            reasoning=str(data["reasoning"]),
+            raw_response=response_text,
+        )
 
     @property
     def model(self) -> str:

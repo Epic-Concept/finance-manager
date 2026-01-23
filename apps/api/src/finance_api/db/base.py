@@ -17,7 +17,12 @@ def import_models() -> None:
         BankSession,
         Category,
         CategoryClosure,
+        ClassificationRule,
         OnlinePurchase,
+        RefinementSession,
+        RuleProposal,
+        SessionMessage,
+        SessionRuleProposal,
         Transaction,
         TransactionCategory,
     )

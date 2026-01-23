@@ -6,7 +6,9 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from finance_api.models.category import Category
+from finance_api.services.high_frequency_analyzer import HighFrequencyPattern
 from finance_api.services.rule_discovery_service import (
+    PatternExplanation,
     RuleDiscoveryError,
     RuleDiscoveryService,
 )
@@ -365,3 +367,244 @@ class TestConfiguration:
             service = RuleDiscoveryService(temperature=0.7)
 
         assert service._temperature == 0.7
+
+
+def create_mock_pattern(
+    phrase: str = "TEST PATTERN",
+    frequency: float = 0.15,
+    transaction_count: int = 150,
+) -> HighFrequencyPattern:
+    """Create a mock HighFrequencyPattern for testing."""
+    return HighFrequencyPattern(
+        phrase=phrase,
+        frequency=frequency,
+        transaction_count=transaction_count,
+        sample_descriptions=[f"Sample with {phrase} 1", f"Sample with {phrase} 2"],
+        sample_transaction_ids=[1, 2],
+    )
+
+
+class TestExplainPattern:
+    """Tests for pattern explanation."""
+
+    @patch("finance_api.services.rule_discovery_service.Anthropic")
+    def test_explains_pattern_successfully(
+        self, mock_anthropic_class: MagicMock
+    ) -> None:
+        """Test successful pattern explanation."""
+        mock_response = MagicMock()
+        mock_response.content = [
+            MagicMock(
+                text=json.dumps({
+                    "explanation": "This is a bank savings round-up feature",
+                    "suggested_category": "Savings",
+                    "confidence": "high",
+                    "reasoning": "Common bank artifact for automatic savings",
+                })
+            )
+        ]
+        mock_client = MagicMock()
+        mock_client.messages.create.return_value = mock_response
+        mock_anthropic_class.return_value = mock_client
+
+        service = RuleDiscoveryService()
+        pattern = create_mock_pattern("ZAKUP PRZY KARTY")
+        categories = [
+            create_mock_category(1, "Groceries"),
+            create_mock_category(2, "Savings"),
+        ]
+
+        result = service.explain_pattern(pattern, categories, total_transactions=1000)
+
+        assert isinstance(result, PatternExplanation)
+        assert result.explanation == "This is a bank savings round-up feature"
+        assert result.suggested_category == "Savings"
+        assert result.suggested_category_id == 2
+        assert result.confidence == "high"
+        assert "savings" in result.reasoning.lower()
+
+    @patch("finance_api.services.rule_discovery_service.Anthropic")
+    def test_handles_category_not_found(
+        self, mock_anthropic_class: MagicMock
+    ) -> None:
+        """Test handling when suggested category is not in list."""
+        mock_response = MagicMock()
+        mock_response.content = [
+            MagicMock(
+                text=json.dumps({
+                    "explanation": "This is a subscription service",
+                    "suggested_category": "Entertainment",
+                    "confidence": "medium",
+                    "reasoning": "Looks like streaming service",
+                })
+            )
+        ]
+        mock_client = MagicMock()
+        mock_client.messages.create.return_value = mock_response
+        mock_anthropic_class.return_value = mock_client
+
+        service = RuleDiscoveryService()
+        pattern = create_mock_pattern()
+        categories = [
+            create_mock_category(1, "Groceries"),
+            create_mock_category(2, "Savings"),
+        ]
+
+        result = service.explain_pattern(pattern, categories, total_transactions=1000)
+
+        assert result.suggested_category == "Entertainment"
+        assert result.suggested_category_id is None  # Not found
+
+    @patch("finance_api.services.rule_discovery_service.Anthropic")
+    def test_handles_api_error(self, mock_anthropic_class: MagicMock) -> None:
+        """Test handling of API error."""
+        mock_client = MagicMock()
+        mock_client.messages.create.side_effect = Exception("API error")
+        mock_anthropic_class.return_value = mock_client
+
+        service = RuleDiscoveryService()
+        pattern = create_mock_pattern()
+        categories = [create_mock_category(1, "Test")]
+
+        with pytest.raises(RuleDiscoveryError) as exc_info:
+            service.explain_pattern(pattern, categories, total_transactions=1000)
+
+        assert "LLM API call failed" in str(exc_info.value)
+
+    @patch("finance_api.services.rule_discovery_service.Anthropic")
+    def test_handles_invalid_json_response(
+        self, mock_anthropic_class: MagicMock
+    ) -> None:
+        """Test handling of invalid JSON response."""
+        mock_response = MagicMock()
+        mock_response.content = [MagicMock(text="not valid json")]
+        mock_client = MagicMock()
+        mock_client.messages.create.return_value = mock_response
+        mock_anthropic_class.return_value = mock_client
+
+        service = RuleDiscoveryService()
+        pattern = create_mock_pattern()
+        categories = [create_mock_category(1, "Test")]
+
+        with pytest.raises(RuleDiscoveryError) as exc_info:
+            service.explain_pattern(pattern, categories, total_transactions=1000)
+
+        assert "Failed to parse LLM response" in str(exc_info.value)
+
+    @patch("finance_api.services.rule_discovery_service.Anthropic")
+    def test_handles_missing_fields(self, mock_anthropic_class: MagicMock) -> None:
+        """Test handling of response with missing required fields."""
+        mock_response = MagicMock()
+        mock_response.content = [
+            MagicMock(
+                text=json.dumps({
+                    "explanation": "Some explanation",
+                    # Missing: suggested_category, confidence, reasoning
+                })
+            )
+        ]
+        mock_client = MagicMock()
+        mock_client.messages.create.return_value = mock_response
+        mock_anthropic_class.return_value = mock_client
+
+        service = RuleDiscoveryService()
+        pattern = create_mock_pattern()
+        categories = [create_mock_category(1, "Test")]
+
+        with pytest.raises(RuleDiscoveryError) as exc_info:
+            service.explain_pattern(pattern, categories, total_transactions=1000)
+
+        assert "Missing required field" in str(exc_info.value)
+
+    @patch("finance_api.services.rule_discovery_service.Anthropic")
+    def test_handles_invalid_confidence(
+        self, mock_anthropic_class: MagicMock
+    ) -> None:
+        """Test handling of invalid confidence level."""
+        mock_response = MagicMock()
+        mock_response.content = [
+            MagicMock(
+                text=json.dumps({
+                    "explanation": "Test",
+                    "suggested_category": "Test",
+                    "confidence": "very_high",  # Invalid
+                    "reasoning": "Test",
+                })
+            )
+        ]
+        mock_client = MagicMock()
+        mock_client.messages.create.return_value = mock_response
+        mock_anthropic_class.return_value = mock_client
+
+        service = RuleDiscoveryService()
+        pattern = create_mock_pattern()
+        categories = [create_mock_category(1, "Test")]
+
+        with pytest.raises(RuleDiscoveryError) as exc_info:
+            service.explain_pattern(pattern, categories, total_transactions=1000)
+
+        assert "Invalid confidence level" in str(exc_info.value)
+
+    @patch("finance_api.services.rule_discovery_service.Anthropic")
+    def test_case_insensitive_category_matching(
+        self, mock_anthropic_class: MagicMock
+    ) -> None:
+        """Test that category matching is case-insensitive."""
+        mock_response = MagicMock()
+        mock_response.content = [
+            MagicMock(
+                text=json.dumps({
+                    "explanation": "Test",
+                    "suggested_category": "SAVINGS",  # Uppercase
+                    "confidence": "high",
+                    "reasoning": "Test",
+                })
+            )
+        ]
+        mock_client = MagicMock()
+        mock_client.messages.create.return_value = mock_response
+        mock_anthropic_class.return_value = mock_client
+
+        service = RuleDiscoveryService()
+        pattern = create_mock_pattern()
+        categories = [
+            create_mock_category(1, "Groceries"),
+            create_mock_category(2, "Savings"),  # Lowercase
+        ]
+
+        result = service.explain_pattern(pattern, categories, total_transactions=1000)
+
+        assert result.suggested_category_id == 2
+
+
+class TestPatternExplanationDataclass:
+    """Tests for PatternExplanation dataclass."""
+
+    def test_creates_pattern_explanation(self) -> None:
+        """Test creating PatternExplanation instance."""
+        explanation = PatternExplanation(
+            explanation="This is a savings feature",
+            suggested_category="Savings",
+            suggested_category_id=5,
+            confidence="high",
+            reasoning="Common bank pattern",
+            raw_response='{"test": "response"}',
+        )
+
+        assert explanation.explanation == "This is a savings feature"
+        assert explanation.suggested_category == "Savings"
+        assert explanation.suggested_category_id == 5
+        assert explanation.confidence == "high"
+
+    def test_creates_with_no_category_id(self) -> None:
+        """Test creating PatternExplanation with no category ID."""
+        explanation = PatternExplanation(
+            explanation="Unknown pattern",
+            suggested_category="Unknown",
+            suggested_category_id=None,
+            confidence="low",
+            reasoning="Not sure",
+            raw_response='{}',
+        )
+
+        assert explanation.suggested_category_id is None

@@ -76,25 +76,35 @@ class TransactionClusteringService:
         r"\s{2,}",  # Multiple spaces
     ]
 
-    def __init__(self, min_cluster_size: int = 2, max_samples: int = 5) -> None:
+    def __init__(
+        self,
+        min_cluster_size: int = 2,
+        max_samples: int = 5,
+        strip_patterns: list[str] | None = None,
+    ) -> None:
         """Initialize the clustering service.
 
         Args:
             min_cluster_size: Minimum transactions required to form a cluster.
             max_samples: Maximum number of sample descriptions per cluster.
+            strip_patterns: Optional list of patterns to strip from descriptions
+                before clustering. These are typically high-frequency phrases
+                detected in Stage 1 (e.g., bank artifacts like savings round-ups).
         """
         self._min_cluster_size = min_cluster_size
         self._max_samples = max_samples
         self._compiled_patterns = [re.compile(p) for p in self.REMOVAL_PATTERNS]
+        self._strip_patterns = strip_patterns or []
 
     def normalize_description(self, description: str) -> str:
         """Normalize a transaction description for clustering.
 
         Pipeline:
         1. Convert to uppercase
-        2. Remove numbers and special characters
-        3. Strip removable suffixes
-        4. Clean up whitespace
+        2. Remove high-frequency strip patterns (from Stage 1)
+        3. Remove numbers and special characters
+        4. Strip removable suffixes
+        5. Clean up whitespace
 
         Args:
             description: Raw transaction description.
@@ -105,14 +115,19 @@ class TransactionClusteringService:
         # Step 1: Uppercase
         normalized = description.upper()
 
-        # Step 2: Remove patterns
+        # Step 2: Remove strip patterns (case-insensitive, already uppercase)
+        for strip_pattern in self._strip_patterns:
+            # Strip patterns are already uppercase from Stage 1 detection
+            normalized = normalized.replace(strip_pattern.upper(), " ")
+
+        # Step 3: Remove regex patterns (numbers, special chars)
         for pattern in self._compiled_patterns:
             normalized = pattern.sub(" ", normalized)
 
-        # Step 3: Clean whitespace
+        # Step 4: Clean whitespace
         normalized = " ".join(normalized.split())
 
-        # Step 4: Remove suffixes
+        # Step 5: Remove suffixes
         words = normalized.split()
         filtered_words = [w for w in words if w not in self.REMOVABLE_SUFFIXES]
 

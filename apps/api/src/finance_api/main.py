@@ -6,6 +6,7 @@ from sqlalchemy import text
 
 from finance_api import __version__
 from finance_api.db.session import SessionLocal
+from finance_api.routers import refinement_router
 
 app = FastAPI(
     title="Finance Manager API",
@@ -20,6 +21,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Register routers
+app.include_router(refinement_router, prefix="/api/v1/refinement", tags=["refinement"])
 
 
 def check_database_health() -> dict[str, str]:

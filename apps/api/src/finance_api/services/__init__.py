@@ -20,6 +20,16 @@ from finance_api.services.email_search_service import (
     EmailSearchQuery,
     EmailSearchService,
 )
+from finance_api.services.high_frequency_analyzer import (
+    HighFrequencyPattern,
+    HighFrequencyPatternAnalyzer,
+)
+from finance_api.services.interactive_refinement_service import (
+    InteractiveRefinementError,
+    InteractiveRefinementService,
+    ProposedRule,
+    RefinementResponse,
+)
 from finance_api.services.receipt_extraction_service import (
     ExtractedItem,
     ExtractedReceipt,
@@ -27,6 +37,7 @@ from finance_api.services.receipt_extraction_service import (
     ReceiptExtractionService,
 )
 from finance_api.services.rule_discovery_service import (
+    PatternExplanation,
     RuleDiscoveryError,
     RuleDiscoveryService,
     RuleProposalResult,
@@ -69,6 +80,7 @@ __all__ = [
     "ReceiptExtractionError",
     "ReceiptExtractionService",
     # Rule Discovery
+    "PatternExplanation",
     "RuleDiscoveryError",
     "RuleDiscoveryService",
     "RuleProposalResult",
@@ -83,4 +95,12 @@ __all__ = [
     "ClusterStatistics",
     "TransactionCluster",
     "TransactionClusteringService",
+    # High Frequency Pattern Analysis
+    "HighFrequencyPattern",
+    "HighFrequencyPatternAnalyzer",
+    # Interactive Refinement
+    "InteractiveRefinementError",
+    "InteractiveRefinementService",
+    "ProposedRule",
+    "RefinementResponse",
 ]

@@ -17,6 +17,11 @@ from finance_api.repositories.email_account_repository import (
     EmailAccountNotFoundError,
     EmailAccountRepository,
 )
+from finance_api.repositories.refinement_session_repository import (
+    RefinementSessionNotFoundError,
+    RefinementSessionRepository,
+    SessionProposalNotFoundError,
+)
 from finance_api.repositories.rule_proposal_repository import (
     RuleProposalNotFoundError,
     RuleProposalRepository,
@@ -32,6 +37,9 @@ __all__ = [
     "ClassificationRuleRepository",
     "EmailAccountNotFoundError",
     "EmailAccountRepository",
+    "RefinementSessionNotFoundError",
+    "RefinementSessionRepository",
     "RuleProposalNotFoundError",
     "RuleProposalRepository",
+    "SessionProposalNotFoundError",
 ]
