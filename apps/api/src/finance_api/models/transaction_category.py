@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, Index, Integer, UniqueConstraint
+from sqlalchemy import DateTime, ForeignKey, Index, Integer, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from finance_api.db.base import Base
@@ -30,6 +30,14 @@ class TransactionCategory(Base):
         Integer,
         ForeignKey("finance.categories.id", ondelete="CASCADE"),
         nullable=False,
+    )
+    classification_source: Mapped[str | None] = mapped_column(
+        String(50), nullable=True, default=None
+    )
+    classification_rule_id: Mapped[int | None] = mapped_column(
+        Integer,
+        ForeignKey("finance.classification_rules.id", ondelete="SET NULL"),
+        nullable=True,
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, default=datetime.utcnow

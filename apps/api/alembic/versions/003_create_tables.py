@@ -6,16 +6,17 @@ Create Date: 2026-01-19
 
 """
 
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 import sqlalchemy as sa
+
 from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "003_create_tables"
-down_revision: Union[str, None] = "002_finance_schema"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = "002_finance_schema"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
@@ -88,7 +89,9 @@ def upgrade() -> None:
         sa.Column("purchase_datetime", sa.DateTime(), nullable=False),
         sa.Column("price", sa.Numeric(19, 4), nullable=False),
         sa.Column("currency", sa.String(3), nullable=False, server_default="GBP"),
-        sa.Column("is_deferred_payment", sa.Boolean(), nullable=False, server_default="0"),
+        sa.Column(
+            "is_deferred_payment", sa.Boolean(), nullable=False, server_default="0"
+        ),
         sa.Column("transaction_id", sa.Integer(), nullable=True),
         sa.Column(
             "created_at", sa.DateTime(), nullable=False, server_default=sa.func.now()
@@ -178,7 +181,9 @@ def upgrade() -> None:
             "updated_at", sa.DateTime(), nullable=False, server_default=sa.func.now()
         ),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("transaction_id", name="UQ_transaction_categories_transaction"),
+        sa.UniqueConstraint(
+            "transaction_id", name="UQ_transaction_categories_transaction"
+        ),
         sa.ForeignKeyConstraint(
             ["transaction_id"],
             ["finance.transactions.id"],

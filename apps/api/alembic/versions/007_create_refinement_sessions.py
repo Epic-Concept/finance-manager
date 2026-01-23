@@ -6,16 +6,17 @@ Create Date: 2026-01-22
 
 """
 
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 import sqlalchemy as sa
+
 from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "007_create_refinement_sessions"
-down_revision: Union[str, None] = "006_create_rule_proposals"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = "006_create_rule_proposals"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
@@ -28,9 +29,7 @@ def upgrade() -> None:
         sa.Column("cluster_key", sa.String(100), nullable=False),
         sa.Column("cluster_size", sa.Integer(), nullable=False),
         sa.Column("sample_descriptions", sa.Text(), nullable=False),
-        sa.Column(
-            "status", sa.String(20), nullable=False, server_default="active"
-        ),
+        sa.Column("status", sa.String(20), nullable=False, server_default="active"),
         sa.Column(
             "created_at", sa.DateTime(), nullable=False, server_default=sa.func.now()
         ),
@@ -95,9 +94,7 @@ def upgrade() -> None:
         sa.Column("validation_precision", sa.Numeric(5, 4), nullable=True),
         sa.Column("validation_coverage", sa.Numeric(5, 4), nullable=True),
         sa.Column("validation_false_positives_json", sa.Text(), nullable=True),
-        sa.Column(
-            "status", sa.String(20), nullable=False, server_default="pending"
-        ),
+        sa.Column("status", sa.String(20), nullable=False, server_default="pending"),
         sa.Column("final_rule_id", sa.Integer(), nullable=True),
         sa.Column(
             "created_at", sa.DateTime(), nullable=False, server_default=sa.func.now()
