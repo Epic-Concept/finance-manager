@@ -1,1 +1,1 @@
-"""Integration tests for SQL Server database operations."""
+"""Integration tests for PostgreSQL database operations."""

@@ -1,21 +1,21 @@
 services:
   db:
-    image: mcr.microsoft.com/mssql/server:2022-latest
+    image: pgvector/pgvector:pg16
     container_name: finance-manager-db
     environment:
-      ACCEPT_EULA: "Y"
-      MSSQL_SA_PASSWORD: ${DB_PASSWORD:-Password123!}
-      MSSQL_PID: Developer
+      POSTGRES_USER: ${DB_USER:-finance}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-finance}
+      POSTGRES_DB: ${DB_NAME:-finance}
     ports:
-      - "${DB_PORT:-1433}:1433"
+      - "${DB_PORT:-5432}:5432"
     volumes:
-      - mssql-data:/var/opt/mssql
+      - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$${MSSQL_SA_PASSWORD}" -Q "SELECT 1" -C || exit 1
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-finance} -d ${DB_NAME:-finance}"]
       interval: 10s
       timeout: 5s
       retries: 10
-      start_period: 30s
+      start_period: 10s
     restart: unless-stopped
 
   api:
@@ -24,7 +24,7 @@ services:
       dockerfile: Dockerfile
     container_name: finance-manager-api
     environment:
-      DATABASE_URL: mssql+pyodbc://sa:${DB_PASSWORD:-Password123!}@db:1433/master?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes
+      DATABASE_URL: postgresql+psycopg://${DB_USER:-finance}:${DB_PASSWORD:-finance}@db:5432/${DB_NAME:-finance}
       HOST: 0.0.0.0
       PORT: 8000
     ports:
@@ -46,4 +46,4 @@ services:
     restart: unless-stopped
 
 volumes:
-  mssql-data:
+  pgdata:

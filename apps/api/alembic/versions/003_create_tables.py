@@ -141,7 +141,7 @@ def upgrade() -> None:
     )
 
     # Create category_closure table
-    # Note: SQL Server doesn't allow multiple CASCADE paths, so we use NO ACTION
+    # Note: avoid multiple CASCADE paths; use NO ACTION and handle cascades in app logic
     # and rely on CategoryRepository to manage closure table consistency
     op.create_table(
         "category_closure",
