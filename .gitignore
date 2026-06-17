@@ -101,3 +101,14 @@ alembic/versions/*.pyc
 
 # Development data (contains sensitive financial data)
 data/
+
+# AI agent / tool runtime directories (local, per-developer)
+.claude/
+.codex/
+.pi/
+.serena/
+
+# Incidental tooling lockfiles / manifests (not project-managed)
+uv.lock
+/package.json
+/package-lock.json
