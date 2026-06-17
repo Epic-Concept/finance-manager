@@ -92,7 +92,7 @@ alembic current
 Set the `DATABASE_URL` environment variable:
 
 ```
-DATABASE_URL=mssql+pyodbc://sa:Password123!@localhost:1433/master?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes
+DATABASE_URL=postgresql+psycopg://finance:finance@localhost:5432/finance
 ```
 
 ### Seeding Data
@@ -102,12 +102,12 @@ DATABASE_URL=mssql+pyodbc://sa:Password123!@localhost:1433/master?driver=ODBC+Dr
 Seed the category hierarchy (117 categories across 5 commitment levels):
 
 ```bash
-# Copy SQL file to container and execute
-docker cp apps/api/scripts/sql/seed_categories.sql finance-manager-db:/tmp/
-docker exec finance-manager-db /opt/mssql-tools18/bin/sqlcmd \
-  -S localhost -U sa -P "Password123!" -C -d master \
-  -i /tmp/seed_categories.sql
+# Run the portable Python seeder (works on any supported database)
+python -m finance_api.scripts.seed_categories --clear
 ```
+
+> The raw `scripts/sql/seed_categories.sql` is a legacy SQL Server-only artifact
+> (uses `SET IDENTITY_INSERT`); use the Python seeder above on PostgreSQL.
 
 The categories follow a 5-level commitment model:
 - **Level 0 (Survival)**: Non-negotiable expenses (housing, utilities, food basics)
@@ -226,7 +226,7 @@ python -m finance_api.scripts.discover_rules --resume
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `DATABASE_URL` | SQL Server connection string | See above |
+| `DATABASE_URL` | PostgreSQL connection string | See above |
 | `HOST` | Server host | `0.0.0.0` |
 | `PORT` | Server port | `8000` |
 | `DEBUG` | Debug mode | `false` |

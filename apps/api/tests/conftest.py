@@ -19,13 +19,13 @@ from finance_api.main import app
 def get_test_database_url() -> str | None:
     """Get database URL from environment for integration tests.
 
-    Returns None if DATABASE_URL is not set, indicating SQL Server is not available.
+    Returns None if DATABASE_URL is not set, indicating PostgreSQL is not available.
     """
     return os.environ.get("DATABASE_URL")
 
 
-def is_sqlserver_available() -> bool:
-    """Check if SQL Server is available for integration tests."""
+def is_postgres_available() -> bool:
+    """Check if PostgreSQL is available for integration tests."""
     url = get_test_database_url()
     if not url:
         return False
@@ -94,20 +94,20 @@ def db_session(in_memory_db: Session) -> Session:
 
 
 # ============================================================================
-# Integration test fixtures (SQL Server)
+# Integration test fixtures (PostgreSQL)
 # ============================================================================
 
 
 @pytest.fixture(scope="session")
-def sqlserver_engine():
-    """Create a SQL Server engine for integration tests.
+def postgres_engine():
+    """Create a PostgreSQL engine for integration tests.
 
     This fixture is session-scoped for efficiency - the engine is reused
     across all integration tests.
     """
     url = get_test_database_url()
     if not url:
-        pytest.skip("DATABASE_URL not set - skipping SQL Server integration tests")
+        pytest.skip("DATABASE_URL not set - skipping PostgreSQL integration tests")
 
     engine = create_engine(url)
 
@@ -116,47 +116,42 @@ def sqlserver_engine():
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
     except Exception as e:
-        pytest.skip(f"Could not connect to SQL Server: {e}")
+        pytest.skip(f"Could not connect to PostgreSQL: {e}")
 
     return engine
 
 
 @pytest.fixture(scope="session")
-def sqlserver_setup(sqlserver_engine):
-    """Set up the SQL Server schema once per test session.
+def postgres_setup(postgres_engine):
+    """Set up the PostgreSQL schema once per test session.
 
     Creates the finance schema and all tables. Tables are preserved
     between tests for efficiency, but data is cleaned up per-test.
     """
     import_models()
 
-    with sqlserver_engine.connect() as conn:
+    with postgres_engine.connect() as conn:
         # Create finance schema if it doesn't exist
-        conn.execute(
-            text(
-                "IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'finance') "
-                "EXEC('CREATE SCHEMA finance')"
-            )
-        )
+        conn.execute(text("CREATE SCHEMA IF NOT EXISTS finance"))
         conn.commit()
 
     # Create all tables
-    Base.metadata.create_all(bind=sqlserver_engine)
+    Base.metadata.create_all(bind=postgres_engine)
 
-    yield sqlserver_engine
+    yield postgres_engine
 
     # Teardown: drop all tables (optional - can be removed if you want to inspect)
-    # Base.metadata.drop_all(bind=sqlserver_engine)
+    # Base.metadata.drop_all(bind=postgres_engine)
 
 
 @pytest.fixture
-def sqlserver_session(sqlserver_setup) -> Generator[Session, None, None]:
-    """Create a SQL Server session for integration tests.
+def postgres_session(postgres_setup) -> Generator[Session, None, None]:
+    """Create a PostgreSQL session for integration tests.
 
     Each test gets a fresh session with transaction rollback for isolation.
     Data is cleaned up after each test.
     """
-    engine = sqlserver_setup
+    engine = postgres_setup
 
     # Create session
     TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -189,7 +184,7 @@ def sqlserver_session(sqlserver_setup) -> Generator[Session, None, None]:
 def pytest_configure(config: pytest.Config) -> None:
     """Register custom markers."""
     config.addinivalue_line("markers", "unit: Unit tests (SQLite)")
-    config.addinivalue_line("markers", "integration: Integration tests (SQL Server)")
+    config.addinivalue_line("markers", "integration: Integration tests (PostgreSQL)")
 
 
 def pytest_collection_modifyitems(config: pytest.Config, items: list) -> None:

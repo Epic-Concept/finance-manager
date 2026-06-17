@@ -19,9 +19,7 @@ depends_on: str | Sequence[str] | None = None
 
 def upgrade() -> None:
     """Create the finance schema."""
-    op.execute(
-        "IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'finance') EXEC('CREATE SCHEMA finance')"
-    )
+    op.execute("CREATE SCHEMA IF NOT EXISTS finance")
 
 
 def downgrade() -> None:

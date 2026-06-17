@@ -27,7 +27,7 @@ dependencies = [
     "pydantic-settings>=2.1.0",
     "sqlalchemy>=2.0.0",
     "alembic>=1.13.0",
-    "pyodbc>=5.0.0",
+    "psycopg[binary]>=3.1.0",
     "pandas>=2.0.0",
     "pyarrow>=14.0.0",
     # Transaction classification dependencies
@@ -92,7 +92,7 @@ asyncio_mode = "auto"
 addopts = "-v --cov=finance_api --cov-report=term-missing"
 markers = [
     "unit: Unit tests that run with in-memory SQLite (fast, no external deps)",
-    "integration: Integration tests that require SQL Server (slower, needs database)",
+    "integration: Integration tests that require PostgreSQL (slower, needs database)",
 ]
 filterwarnings = [
     "ignore:datetime.datetime.utcnow.*:DeprecationWarning",

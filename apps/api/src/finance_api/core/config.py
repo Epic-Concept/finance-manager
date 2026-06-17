@@ -13,9 +13,7 @@ class Settings(BaseSettings):
     )
 
     # Database
-    database_url: str = (
-        "mssql+pyodbc://sa:Password123!@localhost:1433/master?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes"
-    )
+    database_url: str = "postgresql+psycopg://finance:finance@localhost:5432/finance"
 
     # API
     host: str = "0.0.0.0"

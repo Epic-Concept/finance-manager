@@ -7,22 +7,9 @@ This guide walks through setting up a local development environment for the Fina
 - Python 3.11+
 - Node.js 20+
 - Docker Desktop (required for database and full stack development)
-- ODBC Driver 18 for SQL Server (for local API development without Docker)
 
-### Installing ODBC Driver (macOS)
-
-```bash
-brew install microsoft/mssql-release/msodbcsql18
-```
-
-### Installing ODBC Driver (Ubuntu/Debian)
-
-```bash
-curl https://packages.microsoft.com/keys/microsoft.asc | sudo tee /etc/apt/trusted.gpg.d/microsoft.asc
-curl https://packages.microsoft.com/config/ubuntu/22.04/prod.list | sudo tee /etc/apt/sources.list.d/mssql-release.list
-sudo apt-get update
-sudo ACCEPT_EULA=Y apt-get install -y msodbcsql18 unixodbc-dev
-```
+The API connects to PostgreSQL via the `psycopg` driver, which ships its own
+libpq in the binary wheel — no system database client or ODBC driver is needed.
 
 ## Quick Start (Docker Compose)
 
@@ -37,7 +24,7 @@ docker-compose up -d
 ```
 
 This starts:
-- SQL Server 2022 on port 1433
+- PostgreSQL 16 on port 5432
 - API on http://localhost:8000
 - Web on http://localhost:80
 
@@ -53,9 +40,10 @@ make db-up
 docker-compose up -d db
 ```
 
-The database will be available at `localhost:1433` with:
-- Username: `sa`
-- Password: `Password123!` (default, change via `DB_PASSWORD` env var)
+The database will be available at `localhost:5432` with:
+- Username: `finance` (default, change via `DB_USER` env var)
+- Password: `finance` (default, change via `DB_PASSWORD` env var)
+- Database: `finance` (default, change via `DB_NAME` env var)
 
 ### Running Migrations
 
@@ -184,9 +172,11 @@ Copy `.env.example` to `.env` and customize:
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `DATABASE_URL` | SQL Server connection string | See .env.example |
-| `DB_PASSWORD` | Database SA password | `Password123!` |
-| `DB_PORT` | Database port | `1433` |
+| `DATABASE_URL` | PostgreSQL connection string | See .env.example |
+| `DB_USER` | Database user | `finance` |
+| `DB_PASSWORD` | Database password | `finance` |
+| `DB_NAME` | Database name | `finance` |
+| `DB_PORT` | Database port | `5432` |
 | `API_PORT` | API port | `8000` |
 | `WEB_PORT` | Web port | `80` |
 
@@ -214,7 +204,7 @@ Recommended extensions:
 
 1. Ensure Docker is running
 2. Check the database is healthy: `docker-compose ps`
-3. Verify ODBC driver is installed: `odbcinst -q -d`
+3. Verify Postgres is accepting connections: `docker exec finance-manager-db pg_isready -U finance`
 4. Check connection string in `.env`
 
 ### API not starting
@@ -230,9 +220,8 @@ Recommended extensions:
 2. Check the proxy configuration in `vite.config.ts`
 3. Look for CORS errors in the browser console
 
-### SQL Server container won't start
+### PostgreSQL container won't start
 
-SQL Server requires at least 2GB of RAM. On Docker Desktop:
-1. Go to Settings → Resources
-2. Increase memory to at least 4GB
-3. Restart Docker Desktop
+1. Check the container logs: `docker-compose logs db`
+2. Ensure host port 5432 is free, or set `DB_PORT` to another port
+3. If the data volume is corrupted, recreate it: `docker-compose down -v && docker-compose up -d db` (destroys local data)

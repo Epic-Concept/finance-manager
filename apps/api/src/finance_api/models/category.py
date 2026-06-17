@@ -84,7 +84,7 @@ class CategoryClosure(Base):
         {"schema": "finance"},
     )
 
-    # Note: SQL Server doesn't allow multiple CASCADE paths, so we use NO ACTION
+    # Note: avoid multiple CASCADE paths; use NO ACTION and handle cascades in app logic
     # and rely on CategoryRepository to manage closure table consistency
     ancestor_id: Mapped[int] = mapped_column(
         Integer,

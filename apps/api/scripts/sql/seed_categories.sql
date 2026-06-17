@@ -1,5 +1,9 @@
 -- Seed categories with hierarchical closure table
 --
+-- LEGACY: This raw SQL script targets Microsoft SQL Server (uses SET IDENTITY_INSERT)
+-- and does NOT run on PostgreSQL. On PostgreSQL use the portable Python seeder instead:
+--   python -m finance_api.scripts.seed_categories --clear
+--
 -- This script creates the category hierarchy based on a 5-level commitment model:
 --   Level 0: SURVIVAL - Non-negotiable expenses (housing, utilities, food basics)
 --   Level 1: COMMITTED - Contractual obligations (insurance, communication, childcare)
