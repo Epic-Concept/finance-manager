@@ -1,0 +1,46 @@
+# Deployment compose for gb10.local.
+#
+# The database runs as a pre-existing standalone container `finance-manager-db`
+# (published on host port 5433) attached to the external `finance-net` network.
+# This file deploys only the API and web, co-located on that network so the API
+# reaches Postgres at `finance-manager-db:5432`.
+#
+# Usage on gb10 (from the app checkout, with ~/finance-manager/.env providing
+# DB_USER / DB_PASSWORD / DB_NAME):
+#   docker network create finance-net   # once
+#   docker network connect finance-net finance-manager-db   # once
+#   docker compose -f docker-compose.gb10.yml --env-file ~/finance-manager/.env up -d --build
+services:
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    image: finance-manager-api
+    container_name: finance-manager-api
+    environment:
+      DATABASE_URL: postgresql+psycopg://${DB_USER}:${DB_PASSWORD}@finance-manager-db:5432/${DB_NAME}
+      HOST: 0.0.0.0
+      PORT: 8000
+    ports:
+      - "8088:8000"
+    networks:
+      - finance-net
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+    image: finance-manager-web
+    container_name: finance-manager-web
+    depends_on:
+      - api
+    ports:
+      - "8089:80"
+    networks:
+      - finance-net
+    restart: unless-stopped
+
+networks:
+  finance-net:
+    external: true
