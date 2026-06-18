@@ -110,6 +110,28 @@ class TestMultiMailboxSource:
         source = MultiMailboxSource([gmail], window_days=5, wide_window_days=14)
         assert source.find_candidates(_context()) == []
 
+    def test_receipt_like_candidate_is_ranked_first(self) -> None:
+        # A marketing email and a real receipt both match; the receipt ranks first.
+        marketing = RawEmail(
+            "m1",
+            "gmail:me",
+            "Don't miss our sale!",
+            "Big discounts this week. Unsubscribe here.",
+            date(2026, 6, 9),
+        )
+        receipt = RawEmail(
+            "m2",
+            "gmail:me",
+            "Your order receipt",
+            "Order total GBP 20.00. Invoice attached.",
+            date(2026, 6, 9),
+        )
+        gmail = _FakeClient("gmail:me", [marketing, receipt])
+        candidates = MultiMailboxSource([gmail], window_days=5).find_candidates(
+            _context()
+        )
+        assert candidates[0].message_id == "m2"  # the receipt, not the marketing email
+
     def test_candidate_text_is_html_stripped(self) -> None:
         html_email = RawEmail(
             message_id="g1",

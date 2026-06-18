@@ -9,7 +9,14 @@ from datetime import date
 from finance_api.classification.gatherers.imap_mailbox import (
     ImapMailboxClient,
     build_search_criteria,
+    quote_mailbox,
 )
+
+
+class TestQuoteMailbox:
+    def test_quotes_names_with_spaces(self) -> None:
+        assert quote_mailbox("[Gmail]/All Mail") == '"[Gmail]/All Mail"'
+
 
 RAW_EMAIL = b"""From: Amazon <auto-confirm@amazon.co.uk>
 Subject: Your Amazon order
@@ -56,6 +63,20 @@ class TestBuildSearchCriteria:
 
 
 class TestParseMessage:
+    def test_decodes_mime_encoded_subject(self) -> None:
+        raw = (
+            b"Subject: =?UTF-8?Q?Your_=C2=A315_order?=\r\n"
+            b"Message-ID: <x@y>\r\nDate: Mon, 09 Jun 2026 10:00:00 +0000\r\n"
+            b'Content-Type: text/plain; charset="utf-8"\r\n\r\nbody\r\n'
+        )
+        client = ImapMailboxClient(
+            mailbox_id="me@gmail.com",
+            host="imap.gmail.com",
+            username="me@gmail.com",
+            password="x",
+        )
+        assert client._parse_message(raw).subject == "Your £15 order"
+
     def test_parses_headers_and_body(self) -> None:
         client = ImapMailboxClient(
             mailbox_id="me@gmail.com",

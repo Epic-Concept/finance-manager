@@ -12,15 +12,42 @@ from __future__ import annotations
 
 import email
 import imaplib
+import re
+from collections.abc import Sequence
 from datetime import date
+from email.header import decode_header, make_header
 from email.message import Message
 from email.utils import parsedate_to_datetime
 
 from finance_api.classification.gatherers.mailbox import RawEmail
 
+_QUOTED = re.compile(r'"([^"]*)"')
+
 
 def _imap_date(d: date) -> str:
     return d.strftime("%d-%b-%Y")
+
+
+def quote_mailbox(name: str) -> str:
+    """Quote an IMAP mailbox name so names with spaces (e.g. '[Gmail]/All Mail')
+    parse correctly; imaplib does not quote them automatically."""
+    return f'"{name}"'
+
+
+def find_special_folder(list_response: Sequence[object], flag: str) -> str | None:
+    """Find the mailbox carrying an IMAP special-use flag (e.g. '\\All').
+
+    Locale-independent: Gmail localizes folder display names ('All Mail' vs
+    'Wszystkie'), but the special-use flags on the LIST response are stable.
+    """
+    for raw in list_response:
+        line = raw.decode(errors="replace") if isinstance(raw, bytes) else str(raw)
+        flags_part = line[: line.find(")")] if ")" in line else line
+        if flag.lower() in flags_part.lower():
+            names = _QUOTED.findall(line)
+            if names:
+                return str(names[-1])
+    return None
 
 
 def build_search_criteria(terms: list[str], since: date, until: date) -> list[str]:
@@ -33,6 +60,14 @@ def build_search_criteria(terms: list[str], since: date, until: date) -> list[st
             term_criteria = ["OR", "TEXT", term] + term_criteria
         criteria += term_criteria
     return criteria
+
+
+def _decode_header(value: str) -> str:
+    """Decode an RFC 2047 MIME-encoded header (e.g. '=?UTF-8?Q?...?=')."""
+    try:
+        return str(make_header(decode_header(value)))
+    except (ValueError, LookupError):
+        return value
 
 
 def _body_text(message: Message) -> str:
@@ -93,7 +128,7 @@ class ImapMailboxClient:
         return RawEmail(
             message_id=str(message.get("Message-ID", "")).strip(),
             mailbox=self.mailbox_id,
-            subject=str(message.get("Subject", "")).strip(),
+            subject=_decode_header(str(message.get("Subject", ""))).strip(),
             body=_body_text(message),
             date=msg_date,
         )
@@ -103,7 +138,13 @@ class ImapMailboxClient:
         conn = imaplib.IMAP4_SSL(self._host, self._port)
         try:
             conn.login(self._username, self._password)
-            conn.select(self._folder, readonly=True)
+            folder = self._folder
+            # A "\Flag" folder is resolved to the actual (possibly localized)
+            # mailbox name via its IMAP special-use flag.
+            if folder.startswith("\\"):
+                _, boxes = conn.list()
+                folder = find_special_folder(boxes or [], folder) or "INBOX"
+            conn.select(quote_mailbox(folder), readonly=True)
             _, data = conn.search(None, *criteria)
             message_ids = data[0].split() if data and data[0] else []
             results: list[RawEmail] = []

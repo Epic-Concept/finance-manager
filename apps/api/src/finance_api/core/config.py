@@ -34,5 +34,11 @@ class Settings(BaseSettings):
     brave_api_key: str = ""
     brave_base_url: str = "https://api.search.brave.com/res/v1/web/search"
 
+    # Gmail IMAP (receipt mailbox; app password, read-only)
+    gmail_imap_user: str = ""
+    gmail_imap_password: str = ""
+    gmail_imap_host: str = "imap.gmail.com"
+    gmail_imap_folder: str = "\\All"
+
 
 settings = Settings()

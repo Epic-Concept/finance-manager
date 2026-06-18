@@ -13,6 +13,7 @@ import html
 import re
 from dataclasses import dataclass
 from datetime import date, timedelta
+from decimal import Decimal
 from typing import Protocol
 
 from finance_api.classification.gatherer import GatherContext
@@ -25,6 +26,27 @@ _ALPHA_TOKEN = re.compile(r"[A-Za-z]+")
 _SCRIPT_STYLE = re.compile(r"<(script|style)[^>]*>.*?</\1>", re.DOTALL | re.IGNORECASE)
 _TAG = re.compile(r"<[^>]+>")
 _WHITESPACE = re.compile(r"\s+")
+
+# Phrases that signal an actual receipt/order email rather than marketing.
+_RECEIPT_KEYWORDS = (
+    "receipt",
+    "invoice",
+    "order total",
+    "order confirmation",
+    "your order",
+    "amount paid",
+    "total paid",
+    "tax invoice",
+)
+
+
+def _candidate_score(text: str, amount: Decimal | None) -> int:
+    """Rank a candidate by how receipt-like it is (keywords + amount present)."""
+    lowered = text.lower()
+    score = sum(3 for keyword in _RECEIPT_KEYWORDS if keyword in lowered)
+    if amount is not None and f"{amount:.2f}" in text:
+        score += 5
+    return score
 
 
 def strip_html(content: str) -> str:
@@ -101,7 +123,7 @@ class MultiMailboxSource:
         if not emails and self._wide_window_days > self._window_days:
             emails = self._search_window(terms, center, self._wide_window_days)
 
-        return [
+        candidates = [
             EmailCandidate(
                 text=strip_html(f"{e.subject}\n{e.body}"),
                 mailbox=e.mailbox,
@@ -109,3 +131,9 @@ class MultiMailboxSource:
             )
             for e in emails
         ]
+        # Most receipt-like first, so the gatherer tries the real receipt before
+        # marketing/other noise. Stable sort preserves order within equal scores.
+        candidates.sort(
+            key=lambda c: _candidate_score(c.text, context.amount), reverse=True
+        )
+        return candidates
