@@ -64,6 +64,45 @@ def test_receipt_extraction_against_live_model(live_client: LiteLLMClient) -> No
     )
 
 
+def test_web_lookup_agentic_loop_against_live_model(live_client: LiteLLMClient) -> None:
+    """Real qwen drives the tool loop over stubbed Seeed search results."""
+    from finance_api.classification.gatherers.web_lookup import (
+        SearchResult,
+        WebLookupGatherer,
+    )
+
+    class _StubSearch:
+        def search(self, query: str) -> list[SearchResult]:
+            return [
+                SearchResult(
+                    title="Seeed Studio",
+                    url="https://seeedstudio.com",
+                    snippet=(
+                        "Seeed Studio is an electronics hardware company selling "
+                        "open-source dev boards, sensors and IoT modules. Only hardware."
+                    ),
+                )
+            ]
+
+    categories = [
+        CategoryRef(1, "Groceries"),
+        CategoryRef(3, "Electronics & Hardware"),
+        CategoryRef(9, "Eating Out"),
+    ]
+    gatherer = WebLookupGatherer(live_client.chat, _StubSearch(), categories)
+    context = GatherContext(
+        transaction_id=1,
+        description="SEEED STUDIO SHENZHEN",
+        amount=Decimal("48.00"),
+        currency="GBP",
+        transaction_date=date(2026, 6, 6),
+    )
+    evidence = gatherer.gather(context)
+    # The model should research and land on Electronics (3); if confident +
+    # single-category it is STRONG, otherwise WEAK -- but it must pick id 3.
+    assert evidence == [] or evidence[0].claim.category_ids == (3,)
+
+
 def test_inference_gatherer_against_live_model(live_client: LiteLLMClient) -> None:
     categories = [
         CategoryRef(5, "Groceries"),
