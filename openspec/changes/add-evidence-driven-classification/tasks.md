@@ -53,5 +53,5 @@
 
 ## 9. Verification
 
-- [ ] 9.1 End-to-end tests for known-merchant fast path, multi-item receipt split, no-receipt review routing, and double-receipt ambiguity
+- [x] 9.1 End-to-end tests for known-merchant fast path, multi-item receipt split, no-receipt review routing, and double-receipt ambiguity
 - [ ] 9.2 Demonstrate shadow-mode parity before removing the legacy classification path
