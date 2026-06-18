@@ -64,7 +64,43 @@ def test_receipt_extraction_against_live_model(live_client: LiteLLMClient) -> No
     )
 
 
-def test_web_lookup_agentic_loop_against_live_model(live_client: LiteLLMClient) -> None:
+def test_brave_search_live() -> None:
+    from finance_api.classification.web_search import BraveWebSearch
+
+    if not settings.brave_api_key:
+        pytest.skip("BRAVE_API_KEY not configured")
+    results = BraveWebSearch().search("Seeed Studio electronics")
+    assert results, "expected Brave results"
+    assert results[0].title and results[0].url
+
+
+def test_web_lookup_end_to_end_brave_plus_qwen(live_client: LiteLLMClient) -> None:
+    """Full real path: Brave web search + qwen agentic loop, no stubs."""
+    from finance_api.classification.gatherers.web_lookup import WebLookupGatherer
+    from finance_api.classification.web_search import BraveWebSearch
+
+    if not settings.brave_api_key:
+        pytest.skip("BRAVE_API_KEY not configured")
+
+    categories = [
+        CategoryRef(1, "Groceries"),
+        CategoryRef(3, "Electronics & Hardware"),
+        CategoryRef(9, "Eating Out"),
+    ]
+    gatherer = WebLookupGatherer(live_client.chat, BraveWebSearch(), categories)
+    context = GatherContext(
+        transaction_id=1,
+        description="SEEED STUDIO SHENZHEN",
+        amount=Decimal("48.00"),
+        currency="GBP",
+        transaction_date=date(2026, 6, 6),
+    )
+    evidence = gatherer.gather(context)
+    # Real research should resolve Seeed -> Electronics (id 3).
+    assert evidence and evidence[0].claim.category_ids == (3,)
+
+
+def test_inference_gatherer_against_live_model(live_client: LiteLLMClient) -> None:
     """Real qwen drives the tool loop over stubbed Seeed search results."""
     from finance_api.classification.gatherers.web_lookup import (
         SearchResult,

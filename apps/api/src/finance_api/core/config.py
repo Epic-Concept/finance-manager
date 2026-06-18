@@ -30,5 +30,9 @@ class Settings(BaseSettings):
     litellm_max_tokens: int = 8192
     litellm_timeout_seconds: float = 120.0
 
+    # Brave Search API (web-lookup gatherer backend)
+    brave_api_key: str = ""
+    brave_base_url: str = "https://api.search.brave.com/res/v1/web/search"
+
 
 settings = Settings()
