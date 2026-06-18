@@ -22,15 +22,15 @@
 ## 4. Agentic receipt-evidence retrieval
 
 - [ ] 4.1 Implement multi-mailbox search with merchant/amount/date-window query and one configurable widening
-- [ ] 4.2 Implement candidate ranking and ambiguity detection (degrade strength; report when matches found in >1 mailbox)
-- [ ] 4.3 Wire line-item extraction to the local LLM on `gb10.local`; ensure raw email content never leaves on-prem
-- [ ] 4.4 Implement total reconciliation banding (within tolerance → itemized PROOF; moderate → flagged STRONG; large → WEAK)
-- [ ] 4.5 Port existing receipt extraction and item→category mapping behind the gatherer contract
+- [x] 4.2 Implement candidate ranking and ambiguity detection (degrade strength; report when matches found in >1 mailbox)
+- [x] 4.3 Wire line-item extraction to the local LLM on `gb10.local`; ensure raw email content never leaves on-prem
+- [x] 4.4 Implement total reconciliation banding (within tolerance → itemized PROOF; moderate → flagged STRONG; large → WEAK)
+- [x] 4.5 Port existing receipt extraction and item→category mapping behind the gatherer contract
 
 ## 5. Web-lookup and LLM-inference gatherers
 
 - [ ] 5.1 Implement the web-lookup gatherer for unknown merchants (merchant-class signal)
-- [ ] 5.2 Implement the LLM-inference gatherer (bare description guess, always WEAK)
+- [x] 5.2 Implement the LLM-inference gatherer (bare description guess, always WEAK)
 
 ## 6. Categorization output and persistence
 
