@@ -21,7 +21,7 @@
 
 ## 4. Agentic receipt-evidence retrieval
 
-- [ ] 4.1 Implement multi-mailbox search with merchant/amount/date-window query and one configurable widening
+- [x] 4.1 Implement multi-mailbox search with merchant/amount/date-window query and one configurable widening
 - [x] 4.2 Implement candidate ranking and ambiguity detection (degrade strength; report when matches found in >1 mailbox)
 - [x] 4.3 Wire line-item extraction to the local LLM on `gb10.local`; ensure raw email content never leaves on-prem
 - [x] 4.4 Implement total reconciliation banding (within tolerance → itemized PROOF; moderate → flagged STRONG; large → WEAK)
