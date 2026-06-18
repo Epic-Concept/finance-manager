@@ -46,10 +46,10 @@
 
 ## 8. Asynchronous shadow learner
 
-- [ ] 8.1 Emit confirmed `(evidence → decision)` outcomes as an event stream off the hot path
-- [ ] 8.2 Implement rule proposal from consistent confirmed outcomes with stability criteria requiring ≥1 human confirmation
-- [ ] 8.3 Implement cache asymmetry (single-category mappings cacheable; variable splits not, except exact recurring charges)
-- [ ] 8.4 Enforce the learning boundary: gatherer/prompt optimization allowed; policy-gate recalibration only via surfaced, human-approved change
+- [x] 8.1 Emit confirmed `(evidence → decision)` outcomes as an event stream off the hot path
+- [x] 8.2 Implement rule proposal from consistent confirmed outcomes with stability criteria requiring ≥1 human confirmation
+- [x] 8.3 Implement cache asymmetry (single-category mappings cacheable; variable splits not, except exact recurring charges)
+- [x] 8.4 Enforce the learning boundary: gatherer/prompt optimization allowed; policy-gate recalibration only via surfaced, human-approved change
 
 ## 9. Verification
 
