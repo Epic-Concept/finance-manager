@@ -131,6 +131,7 @@ class ImapMailboxClient:
             subject=_decode_header(str(message.get("Subject", ""))).strip(),
             body=_body_text(message),
             date=msg_date,
+            sender=_decode_header(str(message.get("From", ""))).strip(),
         )
 
     def search(self, terms: list[str], since: date, until: date) -> list[RawEmail]:

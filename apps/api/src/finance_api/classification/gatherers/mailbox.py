@@ -79,6 +79,7 @@ class RawEmail:
     subject: str
     body: str
     date: date
+    sender: str = ""
 
 
 class MailboxClient(Protocol):
