@@ -54,4 +54,9 @@
 ## 9. Verification
 
 - [x] 9.1 End-to-end tests for known-merchant fast path, multi-item receipt split, no-receipt review routing, and double-receipt ambiguity
-- [ ] 9.2 Demonstrate shadow-mode parity before removing the legacy classification path
+- [x] 9.2 ~~Demonstrate shadow-mode parity~~ — RE-SCOPED: there is no labelled baseline
+  to be parity-with (the bank `category` field is empty), and the legacy classifier
+  never produced trusted output. Instead, validated the new engine end-to-end on real
+  infrastructure (live qwen / Brave / Gmail) and demonstrated cold-start bootstrap
+  (cluster → LLM-proposes-per-cluster → human-confirm → rules) on the real 1,933
+  transactions before removing the legacy path.
