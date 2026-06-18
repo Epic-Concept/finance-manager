@@ -20,5 +20,12 @@ class Settings(BaseSettings):
     port: int = 8000
     debug: bool = False
 
+    # Local LLM (litellm gateway on gb10.local, OpenAI-compatible)
+    litellm_base_url: str = "http://gb10.local:4000/v1"
+    litellm_api_key: str = ""
+    litellm_model: str = "qwen3.6-35b"
+    litellm_max_tokens: int = 2048
+    litellm_timeout_seconds: float = 120.0
+
 
 settings = Settings()
