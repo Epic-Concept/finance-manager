@@ -9,6 +9,7 @@ is found, and returns :class:`EmailCandidate` objects tagged by mailbox for the
 
 from __future__ import annotations
 
+import html
 import re
 from dataclasses import dataclass
 from datetime import date, timedelta
@@ -20,6 +21,21 @@ from finance_api.classification.gatherers.receipt import EmailCandidate
 # Tokens too short or non-alphabetic to be useful merchant search terms.
 _MIN_TERM_LEN = 4
 _ALPHA_TOKEN = re.compile(r"[A-Za-z]+")
+
+_SCRIPT_STYLE = re.compile(r"<(script|style)[^>]*>.*?</\1>", re.DOTALL | re.IGNORECASE)
+_TAG = re.compile(r"<[^>]+>")
+_WHITESPACE = re.compile(r"\s+")
+
+
+def strip_html(content: str) -> str:
+    """Reduce an HTML (or plain-text) email body to clean text for the LLM.
+
+    Real receipt emails are mostly CSS/markup; the LLM should see the text only.
+    """
+    text = _SCRIPT_STYLE.sub(" ", content)
+    text = _TAG.sub(" ", text)
+    text = html.unescape(text)
+    return _WHITESPACE.sub(" ", text).strip()
 
 
 def merchant_terms(description: str) -> list[str]:
@@ -87,7 +103,7 @@ class MultiMailboxSource:
 
         return [
             EmailCandidate(
-                text=f"{e.subject}\n{e.body}",
+                text=strip_html(f"{e.subject}\n{e.body}"),
                 mailbox=e.mailbox,
                 message_id=e.message_id,
             )

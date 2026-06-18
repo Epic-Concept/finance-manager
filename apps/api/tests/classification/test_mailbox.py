@@ -14,7 +14,23 @@ from finance_api.classification.gatherers.mailbox import (
     MultiMailboxSource,
     RawEmail,
     merchant_terms,
+    strip_html,
 )
+
+
+class TestStripHtml:
+    def test_removes_tags_and_keeps_text(self) -> None:
+        assert strip_html("<p>Hello <b>world</b></p>") == "Hello world"
+
+    def test_drops_style_and_script_blocks(self) -> None:
+        html = "<style>p{color:red}</style><p>Order total GBP 15.00</p><script>x()</script>"
+        assert strip_html(html) == "Order total GBP 15.00"
+
+    def test_decodes_entities_and_collapses_whitespace(self) -> None:
+        assert strip_html("<p>Tom &amp;  Jerry\n\n  shop</p>") == "Tom & Jerry shop"
+
+    def test_plain_text_passes_through(self) -> None:
+        assert strip_html("Order total GBP 20.00") == "Order total GBP 20.00"
 
 
 class _FakeClient:
@@ -93,3 +109,18 @@ class TestMultiMailboxSource:
         gmail = _FakeClient("gmail:me", [_email("gmail:me", "g1", date(2025, 1, 1))])
         source = MultiMailboxSource([gmail], window_days=5, wide_window_days=14)
         assert source.find_candidates(_context()) == []
+
+    def test_candidate_text_is_html_stripped(self) -> None:
+        html_email = RawEmail(
+            message_id="g1",
+            mailbox="gmail:me",
+            subject="Your order",
+            body="<style>x{}</style><p>Order total <b>GBP 20.00</b></p>",
+            date=date(2026, 6, 9),
+        )
+        gmail = _FakeClient("gmail:me", [html_email])
+        candidates = MultiMailboxSource([gmail], window_days=5).find_candidates(
+            _context()
+        )
+        assert "Order total GBP 20.00" in candidates[0].text
+        assert "<" not in candidates[0].text
