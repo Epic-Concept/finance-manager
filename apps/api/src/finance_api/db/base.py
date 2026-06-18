@@ -15,9 +15,12 @@ def import_models() -> None:
     """Import all models to register them with SQLAlchemy metadata."""
     from finance_api.models import (  # noqa: F401
         BankSession,
+        CategorizationSplit,
         Category,
         CategoryClosure,
+        ClassificationDecision,
         ClassificationRule,
+        DecisionEvidence,
         OnlinePurchase,
         RefinementSession,
         RuleProposal,
