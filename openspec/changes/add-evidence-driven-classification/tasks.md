@@ -40,9 +40,9 @@
 
 ## 7. Engine integration
 
-- [ ] 7.1 Replace `ClassificationOrchestrator` and `AIDisambiguationService` with the gather/decide engine
+- [x] 7.1 Replace `ClassificationOrchestrator` and `AIDisambiguationService` with the gather/decide engine
 - [ ] 7.2 Retire redundant LLM rule-creation surfaces (`propose_rule`, `refine_rule`, `explain_pattern`), keeping one conversational refinement tool for the review/learning loop
-- [ ] 7.3 Add a shadow-mode runner that classifies historical transactions and reports parity vs the old path before cutover
+- [x] 7.3 Add a shadow-mode runner that classifies historical transactions and reports parity vs the old path before cutover
 
 ## 8. Asynchronous shadow learner
 
