@@ -24,7 +24,10 @@ class Settings(BaseSettings):
     litellm_base_url: str = "http://gb10.local:4000/v1"
     litellm_api_key: str = ""
     litellm_model: str = "qwen3.6-35b"
-    litellm_max_tokens: int = 2048
+    # qwen3.6-35b is a reasoning model: chain-of-thought is emitted before the
+    # answer, so the budget must cover reasoning + output. The gateway serves a
+    # 256k context, so this is generous headroom, not a tight cap.
+    litellm_max_tokens: int = 8192
     litellm_timeout_seconds: float = 120.0
 
 
