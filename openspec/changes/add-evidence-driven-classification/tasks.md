@@ -29,7 +29,7 @@
 
 ## 5. Web-lookup and LLM-inference gatherers
 
-- [ ] 5.1 Implement the web-lookup gatherer for unknown merchants (merchant-class signal)
+- [x] 5.1 Implement the web-lookup gatherer for unknown merchants (merchant-class signal)
 - [x] 5.2 Implement the LLM-inference gatherer (bare description guess, always WEAK)
 
 ## 6. Categorization output and persistence
