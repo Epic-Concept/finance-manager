@@ -2,10 +2,9 @@
 
 from logging.config import fileConfig
 
-from alembic import context
-from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 
+from alembic import context
 from finance_api.core.config import settings
 from finance_api.db.base import Base, import_models
 from finance_api.db.engine import engine

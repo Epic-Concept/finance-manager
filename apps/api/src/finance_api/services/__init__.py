@@ -1,55 +1,23 @@
-"""Business logic services."""
+"""Business logic services.
 
-from finance_api.services.ai_disambiguation_service import (
-    AIDisambiguationService,
-    DisambiguationError,
-    DisambiguationResult,
-)
-from finance_api.services.category_mapping_service import (
-    CategoryMappingService,
-    MappedItem,
-    MappingResult,
-)
-from finance_api.services.classification_orchestrator import (
-    ClassificationOrchestrator,
-    ClassificationResult,
-)
-from finance_api.services.email_search_service import (
-    EmailClientInterface,
-    EmailMessage,
-    EmailSearchQuery,
-    EmailSearchService,
-)
-from finance_api.services.high_frequency_analyzer import (
-    HighFrequencyPattern,
-    HighFrequencyPatternAnalyzer,
-)
+The legacy classification stack (rule-engine RulesClassificationService,
+ClassificationOrchestrator, AIDisambiguationService, and the redundant LLM
+rule-creation surfaces) has been removed in favour of the evidence-driven
+engine in ``finance_api.classification``. The conversational refinement tool
+(clustering + validation + interactive refinement) is retained for the
+review/learning loop.
+"""
+
 from finance_api.services.interactive_refinement_service import (
     InteractiveRefinementError,
     InteractiveRefinementService,
     ProposedRule,
     RefinementResponse,
 )
-from finance_api.services.receipt_extraction_service import (
-    ExtractedItem,
-    ExtractedReceipt,
-    ReceiptExtractionError,
-    ReceiptExtractionService,
-)
-from finance_api.services.rule_discovery_service import (
-    PatternExplanation,
-    RuleDiscoveryError,
-    RuleDiscoveryService,
-    RuleProposalResult,
-)
 from finance_api.services.rule_validation_service import (
     ConflictResult,
     RuleValidationService,
     ValidationResult,
-)
-from finance_api.services.rules_classification_service import (
-    RuleMatch,
-    RulesClassificationService,
 )
 from finance_api.services.transaction_clustering_service import (
     ClusterStatistics,
@@ -58,47 +26,12 @@ from finance_api.services.transaction_clustering_service import (
 )
 
 __all__ = [
-    # AI Disambiguation
-    "AIDisambiguationService",
-    "DisambiguationError",
-    "DisambiguationResult",
-    # Category Mapping
-    "CategoryMappingService",
-    "MappedItem",
-    "MappingResult",
-    # Classification Orchestrator
-    "ClassificationOrchestrator",
-    "ClassificationResult",
-    # Email Search
-    "EmailClientInterface",
-    "EmailMessage",
-    "EmailSearchQuery",
-    "EmailSearchService",
-    # Receipt Extraction
-    "ExtractedItem",
-    "ExtractedReceipt",
-    "ReceiptExtractionError",
-    "ReceiptExtractionService",
-    # Rule Discovery
-    "PatternExplanation",
-    "RuleDiscoveryError",
-    "RuleDiscoveryService",
-    "RuleProposalResult",
-    # Rule Validation
     "ConflictResult",
     "RuleValidationService",
     "ValidationResult",
-    # Rules Classification
-    "RuleMatch",
-    "RulesClassificationService",
-    # Transaction Clustering
     "ClusterStatistics",
     "TransactionCluster",
     "TransactionClusteringService",
-    # High Frequency Pattern Analysis
-    "HighFrequencyPattern",
-    "HighFrequencyPatternAnalyzer",
-    # Interactive Refinement
     "InteractiveRefinementError",
     "InteractiveRefinementService",
     "ProposedRule",
