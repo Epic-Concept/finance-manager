@@ -5,12 +5,12 @@
 
 ## 2. Transaction ingestion (Azure -> gb10)
 
-- [ ] 2.1 Implement the incremental pull-sync: query source rows where `synced_at` > cursor, ordered, bounded per run
-- [ ] 2.2 Implement idempotent upsert keyed by `transaction_id` -> `external_id` (skip/update existing)
-- [ ] 2.3 Implement normalization (source columns -> canonical `Transaction`, exact-decimal amount)
-- [ ] 2.4 Persist + advance the sync cursor only on success; leave unchanged on failure
-- [ ] 2.5 Add a runnable sync entrypoint (CLI) suitable for scheduling
-- [ ] 2.6 Tests: incremental fetch, idempotency, normalization, failure-leaves-cursor (pure logic with a fake source; one live backfill against Azure)
+- [x] 2.1 Implement the incremental pull-sync: query source rows where `synced_at` > cursor, ordered, bounded per run — `TransactionSyncService.sync()` + `TransactionSource.fetch_since(cursor)`; live `AzureSqlSource` queries `WHERE synced_at > ? ORDER BY synced_at ASC`
+- [x] 2.2 Implement idempotent upsert keyed by `transaction_id` -> `external_id` (skip/update existing) — upsert by `external_id` (insert new, update existing); no duplicates
+- [x] 2.3 Implement normalization (source columns -> canonical `Transaction`, exact-decimal amount) — `normalize_transaction()` (added `merchant_name` to `Transaction`; exact `Decimal(str(...))`; datetime→date)
+- [x] 2.4 Persist + advance the sync cursor only on success; leave unchanged on failure — cursor (`SyncState` table) + txns committed together; failure rolls back, cursor unchanged
+- [x] 2.5 Add a runnable sync entrypoint (CLI) suitable for scheduling — `python -m finance_api.scripts.sync_transactions`
+- [x] 2.6 Tests: incremental fetch, idempotency, normalization, failure-leaves-cursor (pure logic with a fake source) — 7 tests green (mypy --strict/ruff/black clean). NOTE: the one **live backfill** against Azure is deferred to deployment (group 6): needs `msodbcsql18`+`pyodbc` in the API image and migration 011 applied on gb10.
 
 ## 3. Classification runtime
 

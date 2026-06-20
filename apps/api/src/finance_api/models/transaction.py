@@ -26,6 +26,7 @@ class Transaction(Base):
     currency: Mapped[str] = mapped_column(String(3), nullable=False, default="GBP")
     external_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
     account_name: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    merchant_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, default=datetime.utcnow
