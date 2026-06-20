@@ -1,7 +1,7 @@
 ## 1. Azure connectivity spike
 
-- [ ] 1.1 Resolve how gb10 reaches Azure Postgres despite a changing egress IP (fixed-IP Tailscale exit / private endpoint+VPN / SSL+strong-auth broad rule); document the chosen approach
-- [ ] 1.2 Add the read-only Azure connection string as a gitignored host secret + config setting; verify a live SSL connection from gb10
+- [x] 1.1 Resolve how gb10 reaches the Azure SQL source despite a changing egress IP — RESOLVED: gb10 has a stable home egress IP `45.11.63.27`, already allowlisted by the Terraform-managed `AllowHome` firewall rule on the SQL server + SSL + Entra SP auth (see design Spike Results 1.1)
+- [ ] 1.2 Add the read-only Azure connection secret + config setting; verify a live SSL connection from gb10 — Source is **Azure SQL** (`sqldb-home-automation`), auth via Entra SP `finance-manager-gb10`. Auth + MI + Directory Readers + firewall codified in IaC PR Epic-Concept/epic-concept-infra-platform#15. PENDING: merge+apply, then pull SP creds from Key Vault → gb10 `.env`, run in-DB `CREATE USER ... FROM EXTERNAL PROVIDER` + `db_datareader`, verify live read.
 
 ## 2. Transaction ingestion (Azure -> gb10)
 

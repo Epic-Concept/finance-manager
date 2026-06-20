@@ -2,7 +2,7 @@
 
 ### Requirement: Incremental pull-sync from the upstream source
 
-The system SHALL pull transactions from the upstream Azure Postgres into the gb10 store incrementally, using a persisted `synced_at` cursor so each run fetches only records newer than the last successful sync. The sync SHALL be pull-based (gb10 initiates); the upstream SHALL NOT require inbound access to gb10.
+The system SHALL pull transactions from the upstream **Azure SQL** database (read-only, authenticated with an Entra service principal over SSL) into the gb10 store incrementally, using a persisted `synced_at` cursor so each run fetches only records newer than the last successful sync. The sync SHALL be pull-based (gb10 initiates); the upstream SHALL NOT require inbound access to gb10.
 
 #### Scenario: Only new records are fetched
 
