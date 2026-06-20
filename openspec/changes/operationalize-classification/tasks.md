@@ -22,11 +22,11 @@
 
 ## 4. Cold-start bootstrap
 
-- [ ] 4.1 Seed the 117-category hierarchy on gb10 (Python seeder) incl. an internal-transfer category
-- [ ] 4.2 Build the interactive bootstrap CLI: cluster -> show top clusters + LLM proposal + coverage -> operator confirms/corrects/skips
-- [ ] 4.3 On confirm, create active rules via `apply_proposals`; support assigning the internal-transfer category to self/business/family clusters
-- [ ] 4.4 Run the bootstrap on the real transactions to seed the initial rule cache
-- [ ] 4.5 Tests: confirm-creates-rule, skip-creates-nothing, coverage reporting (fakes)
+- [x] 4.1 Seed the category hierarchy (Python seeder) incl. an internal-transfer category — added `Internal Transfer` top-level (Self/Business/Family Transfer children) to `seed_categories.CATEGORY_HIERARCHY`
+- [x] 4.2 Build the interactive bootstrap CLI: cluster -> show top clusters + LLM proposal + coverage -> operator confirms/corrects/skips — `scripts/bootstrap_rules.py` (reuses `build_proposals`/`cluster_coverage`/`resolve_choice`)
+- [x] 4.3 On confirm, create active rules via `apply_proposals`; support assigning the internal-transfer category to self/business/family clusters — `apply_proposals` (operator can enter the Internal Transfer category id for self/business/family clusters)
+- [ ] 4.4 Run the bootstrap on the real transactions to seed the initial rule cache — DEFERRED to deployment (group 6): needs gb10 + local LLM + synced transactions
+- [x] 4.5 Tests: confirm-creates-rule, skip-creates-nothing, coverage reporting (fakes) — coverage + resolve_choice tests added; confirm/skip already covered by `test_db_sources` (`apply_proposals`)
 
 ## 5. Review and learning loop
 

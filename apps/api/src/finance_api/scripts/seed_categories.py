@@ -371,6 +371,27 @@ CATEGORY_HIERARCHY = [
             {"name": "Vacation Fund", "commitment_level": 4, "frequency": "monthly"},
         ],
     },
+    # INTERNAL TRANSFERS (not spend): intra-family/business money movement.
+    # Bootstrap assigns self/business/family clusters here so they are not
+    # mis-categorized as purchases.
+    {
+        "name": "Internal Transfer",
+        "commitment_level": 1,
+        "frequency": "irregular",
+        "children": [
+            {"name": "Self Transfer", "commitment_level": 1, "frequency": "irregular"},
+            {
+                "name": "Business Transfer",
+                "commitment_level": 1,
+                "frequency": "irregular",
+            },
+            {
+                "name": "Family Transfer",
+                "commitment_level": 1,
+                "frequency": "irregular",
+            },
+        ],
+    },
 ]
 
 

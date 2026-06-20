@@ -94,3 +94,48 @@ def build_proposals(
     """Cluster transactions and propose categories for the largest N clusters."""
     clusters = clustering.cluster_transactions(list(transactions))  # type: ignore[arg-type]
     return [proposer.propose(cluster) for cluster in clusters[:top_n]]
+
+
+@dataclass(frozen=True)
+class CoverageReport:
+    """How many transactions the selected (top-N) clusters account for."""
+
+    covered: int
+    total: int
+    cluster_count: int
+
+    @property
+    def fraction(self) -> float:
+        return self.covered / self.total if self.total else 0.0
+
+
+def cluster_coverage(
+    clusters: Sequence[TransactionCluster], top_n: int | None = None
+) -> CoverageReport:
+    """Report the share of transactions covered by the largest ``top_n`` clusters.
+
+    Lets the operator weigh labelling effort vs. coverage before confirming
+    (e.g. "the top 100 clusters cover 74% of transactions").
+    """
+    total = sum(c.size for c in clusters)
+    selected = list(clusters) if top_n is None else list(clusters)[:top_n]
+    covered = sum(c.size for c in selected)
+    return CoverageReport(covered=covered, total=total, cluster_count=len(selected))
+
+
+def resolve_choice(raw: str, proposed_category_id: int | None) -> int | None:
+    """Interpret an operator's bootstrap response into a category id (or skip).
+
+    - blank / "y" -> confirm the proposed category
+    - "s" / "n"   -> skip (no rule)
+    - a number    -> override with that category id
+    Returns the chosen category id, or ``None`` to skip.
+    """
+    choice = raw.strip().lower()
+    if choice in ("s", "n", "skip"):
+        return None
+    if choice in ("", "y", "yes"):
+        return proposed_category_id
+    if choice.lstrip("-").isdigit():
+        return int(choice)
+    return None
