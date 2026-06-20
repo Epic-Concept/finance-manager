@@ -262,6 +262,58 @@ class RefinementSessionRepository:
         self._session.flush()
         return proposal
 
+    def update_proposal(
+        self,
+        proposal_id: int,
+        proposed_category_id: int | None,
+        proposed_category_name: str,
+        llm_confidence: str,
+        llm_reasoning: str,
+        validation_matches: int | None = None,
+        validation_precision: float | None = None,
+        validation_true_positives: int | None = None,
+        validation_false_positives: int | None = None,
+        sample_false_positives: list[str] | None = None,
+    ) -> SessionRuleProposal:
+        """Update an existing proposal with new LLM data.
+
+        Args:
+            proposal_id: The proposal ID.
+            proposed_category_id: The proposed category ID.
+            proposed_category_name: The proposed category name.
+            llm_confidence: LLM confidence level (high/medium/low).
+            llm_reasoning: LLM reasoning for the proposal.
+            validation_matches: Number of matches in validation.
+            validation_precision: Precision of the pattern.
+            validation_true_positives: Number of true positives.
+            validation_false_positives: Number of false positives.
+            sample_false_positives: Sample false positive descriptions.
+
+        Returns:
+            The updated SessionRuleProposal.
+
+        Raises:
+            SessionProposalNotFoundError: If proposal doesn't exist.
+        """
+        proposal = self.get_proposal(proposal_id)
+        proposal.proposed_category_id = proposed_category_id
+        proposal.proposed_category_name = proposed_category_name
+        proposal.llm_confidence = llm_confidence
+        proposal.llm_reasoning = llm_reasoning
+
+        if validation_matches is not None:
+            proposal.validation_matches = validation_matches
+        if validation_precision is not None:
+            proposal.validation_precision = Decimal(str(validation_precision))
+        if validation_true_positives is not None:
+            proposal.validation_true_positives = validation_true_positives
+        if validation_false_positives is not None:
+            proposal.validation_false_positives = validation_false_positives
+        if sample_false_positives is not None:
+            proposal.validation_false_positives_json = json.dumps(sample_false_positives)
+
+        return proposal
+
     def get_proposal(self, proposal_id: int) -> SessionRuleProposal:
         """Get a session rule proposal by ID.
 

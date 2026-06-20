@@ -56,7 +56,11 @@ Sample descriptions:
 {category_list}
 
 ## Response Format
-When proposing rules, include a JSON block in your response with this format:
+IMPORTANT: You MUST include a JSON block with ALL current proposals in EVERY response.
+Even when confirming changes or discussing adjustments, always include the complete JSON
+reflecting the current state of all proposals. This keeps the system in sync.
+
+Format:
 ```json
 {{
     "proposals": [
@@ -97,7 +101,7 @@ class InteractiveRefinementService:
     def __init__(
         self,
         api_key: str | None = None,
-        model: str = "claude-sonnet-4-5-20250514",
+        model: str = "claude-sonnet-4-5-20250929",
         temperature: float = 0.3,
         validation_service: RuleValidationService | None = None,
     ) -> None:
