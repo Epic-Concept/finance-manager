@@ -1,7 +1,7 @@
 ## 1. Azure connectivity spike
 
 - [x] 1.1 Resolve how gb10 reaches the Azure SQL source despite a changing egress IP — RESOLVED: gb10 has a stable home egress IP `45.11.63.27`, already allowlisted by the Terraform-managed `AllowHome` firewall rule on the SQL server + SSL + Entra SP auth (see design Spike Results 1.1)
-- [ ] 1.2 Add the read-only Azure connection secret + config setting; verify a live SSL connection from gb10 — Source is **Azure SQL** (`sqldb-home-automation`), auth via Entra SP `finance-manager-gb10`. Auth + MI + Directory Readers + firewall codified in IaC PR Epic-Concept/epic-concept-infra-platform#15. PENDING: merge+apply, then pull SP creds from Key Vault → gb10 `.env`, run in-DB `CREATE USER ... FROM EXTERNAL PROVIDER` + `db_datareader`, verify live read.
+- [x] 1.2 Add the read-only Azure connection secret + config setting; verify a live SSL connection from gb10 — DONE. Source is **Azure SQL** `sqldb-home-automation` (schema `finance`), auth via Entra SP `finance-manager-gb10` (appId 82fdfa33…), provisioned in IaC (Epic-Concept/epic-concept-infra-platform#15 merged+applied: SQL MI + SP + secret→Key Vault `kv-epic-concept-mgt`). gb10 `.env` has AZURE_SQL_{TENANT_ID,CLIENT_ID,CLIENT_SECRET,SERVER,DATABASE}. DB user created by SID (`0x33FAFD82…`) + `db_datareader` (no Directory Readers needed). **Live-verified**: SP read `finance.bank_transactions` (4415 rows, 14 cols incl. transaction_id/synced_at/amount-decimal) from gb10 over SSL.
 
 ## 2. Transaction ingestion (Azure -> gb10)
 
