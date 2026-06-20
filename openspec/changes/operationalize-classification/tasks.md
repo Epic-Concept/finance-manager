@@ -14,11 +14,11 @@
 
 ## 3. Classification runtime
 
-- [ ] 3.1 Implement `DbHistorySource` (prior confirmed outcomes per merchant) + tests
-- [ ] 3.2 Implement the engine factory: compose policy + gatherers (rules/history/web/llm/agentic-receipt) from config; omit unconfigured backends
-- [ ] 3.3 Implement the daily classification job: classify new/unclassified transactions, persist decisions+splits+evidence, enqueue reviews; idempotent
-- [ ] 3.4 Add a runnable classify entrypoint (CLI) for scheduling
-- [ ] 3.5 Tests: factory composition, history source, daily-job idempotency (fakes); one live end-to-end on a small synced sample
+- [x] 3.1 Implement `DbHistorySource` (prior confirmed outcomes per merchant) + tests — `DbHistorySource` in db_sources.py (merchant_key match over persisted single-category decisions; `human_confirmed` from new `confirmed` column, migration 012)
+- [x] 3.2 Implement the engine factory: compose policy + gatherers (rules/history/web/llm/agentic-receipt) from config; omit unconfigured backends — `factory.build_gatherers/build_engine` (rules+history always; llm/web/receipt gated on litellm + brave/gmail config)
+- [x] 3.3 Implement the daily classification job: classify new/unclassified transactions, persist decisions+splits+evidence, enqueue reviews; idempotent — `daily.run_daily_classification` (NOT EXISTS undecided filter; persists via `ClassificationDecisionRepository.record`; review = decisions with outcome=review)
+- [x] 3.4 Add a runnable classify entrypoint (CLI) for scheduling — `python -m finance_api.scripts.classify_transactions`
+- [x] 3.5 Tests: factory composition, history source, daily-job idempotency (fakes) — 11 tests green (mypy --strict/ruff/black clean). NOTE: the one **live end-to-end** is deferred to deployment (group 6), with group 2's live backfill.
 
 ## 4. Cold-start bootstrap
 
