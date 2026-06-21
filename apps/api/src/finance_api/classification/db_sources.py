@@ -14,8 +14,13 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from finance_api.classification.bootstrap import ClusterProposal
+from finance_api.classification.gatherers.history import HistoryOutcome
 from finance_api.classification.gatherers.rules import RulePattern
+from finance_api.classification.learning import merchant_key
+from finance_api.classification.policy import Outcome
+from finance_api.models.classification_decision import ClassificationDecision
 from finance_api.models.classification_rule import ClassificationRule
+from finance_api.models.transaction import Transaction
 
 
 def apply_proposals(
@@ -65,3 +70,41 @@ class DbRuleSource:
             )
             for rule in self._session.scalars(stmt)
         ]
+
+
+class DbHistorySource:
+    """Reads prior per-merchant outcomes from persisted classification decisions.
+
+    Surfaces the category a merchant resolved to before, so the HistoryGatherer
+    can contribute in production. Only applied (``AUTO_APPLY``) or human-confirmed
+    single-category decisions count; the ``human_confirmed`` flag lets the
+    gatherer's self-confirmation guard gate STRONG promotion.
+    """
+
+    def __init__(self, session: Session) -> None:
+        self._session = session
+
+    def outcomes_for(self, description: str) -> list[HistoryOutcome]:
+        key = merchant_key(description)
+        if not key:
+            return []
+
+        stmt = (
+            select(ClassificationDecision, Transaction.description)
+            .join(Transaction, ClassificationDecision.transaction_id == Transaction.id)
+            .where(Transaction.description.ilike(f"%{key}%"))
+        )
+        outcomes: list[HistoryOutcome] = []
+        for decision, txn_description in self._session.execute(stmt):
+            if merchant_key(txn_description) != key:
+                continue
+            applied = decision.outcome == Outcome.AUTO_APPLY.value or decision.confirmed
+            if not applied or len(decision.splits) != 1:
+                continue
+            outcomes.append(
+                HistoryOutcome(
+                    category_id=decision.splits[0].category_id,
+                    human_confirmed=decision.confirmed,
+                )
+            )
+        return outcomes

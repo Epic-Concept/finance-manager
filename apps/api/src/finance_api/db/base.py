@@ -26,6 +26,7 @@ def import_models() -> None:
         RuleProposal,
         SessionMessage,
         SessionRuleProposal,
+        SyncState,
         Transaction,
         TransactionCategory,
     )

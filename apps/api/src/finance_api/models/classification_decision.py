@@ -44,6 +44,9 @@ class ClassificationDecision(Base):
     merchant_class: Mapped[str] = mapped_column(String(20), nullable=False)
     strength: Mapped[int] = mapped_column(Integer, nullable=False)  # StrengthTier value
     reason: Mapped[str] = mapped_column(String(50), nullable=False)
+    # True once a human has confirmed this decision (auto-applied left as-is, or a
+    # review resolved). Gates whether history can be promoted to a STRONG signal.
+    confirmed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, default=datetime.utcnow
     )

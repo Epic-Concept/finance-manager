@@ -17,6 +17,11 @@ services:
       dockerfile: Dockerfile
     image: finance-manager-api
     container_name: finance-manager-api
+    # Inject app secrets (AZURE_SQL_*, optional litellm/brave/gmail) into the
+    # container. Path is relative to this compose file (the app/ checkout), i.e.
+    # ~/finance-manager/.env. DATABASE_URL below overrides any value in the file.
+    env_file:
+      - ../.env
     environment:
       DATABASE_URL: postgresql+psycopg://${DB_USER}:${DB_PASSWORD}@finance-manager-db:5432/${DB_NAME}
       HOST: 0.0.0.0

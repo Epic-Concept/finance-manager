@@ -1,13 +1,13 @@
 ## Context
 
-`add-evidence-driven-classification` delivered the engine, gatherers, policy, persistence, learner, and bootstrap core — all live-verified against real qwen/Brave/Gmail/Postgres. But nothing runs unattended: there is no transaction ingestion, no scheduled classify run, no `DbHistorySource`, no operator review surface, and the rule cache starts empty. Transactions already land nightly in an upstream **Azure Postgres** (the user's existing pipeline); gb10 is the canonical local-first store for classification, decisions, and evidence. This change wires the daily loop: sync → classify → review → learn.
+`add-evidence-driven-classification` delivered the engine, gatherers, policy, persistence, learner, and bootstrap core — all live-verified against real qwen/Brave/Gmail/Postgres. But nothing runs unattended: there is no transaction ingestion, no scheduled classify run, no `DbHistorySource`, no operator review surface, and the rule cache starts empty. Transactions already land nightly in an upstream **Azure SQL** (the user's existing pipeline); gb10 is the canonical local-first store for classification, decisions, and evidence. This change wires the daily loop: sync → classify → review → learn.
 
 Constraints carried from the project: local-first on gb10, exact-decimal money, human-owned policy gate, gatherers behind Protocols, ≥1 human confirmation before rule promotion.
 
 ## Goals / Non-Goals
 
 **Goals:**
-- Nightly incremental ingestion from Azure Postgres into gb10 (cursor, idempotent, normalized).
+- Nightly incremental ingestion from Azure SQL into gb10 (cursor, idempotent, normalized).
 - A production engine factory + `DbHistorySource` + a daily classification job.
 - A cold-start bootstrap CLI that seeds rules cheaply (cluster → propose → confirm) and seeds categories incl. internal-transfer.
 - A review surface + the confirmation→learner→promotion loop, scheduled.
@@ -21,10 +21,13 @@ Constraints carried from the project: local-first on gb10, exact-decimal money, 
 ## Decisions
 
 ### Decision: Pull-sync, gb10 polls Azure
-gb10 is mobile (Tailscale) with no stable ingress, so it polls Azure after the evening refresh rather than receiving a push. The source already stamps `synced_at` (cursor) and `transaction_id` (idempotency), so the sync is a thin incremental upsert, not a connector framework. *Alternative considered:* logical replication / FDW — rejected as heavyweight for a nightly batch.
+gb10 polls Azure SQL after the evening refresh rather than receiving a push (no stable ingress needed). The source already stamps `synced_at` (cursor) and `transaction_id` (idempotency), so the sync is a thin incremental read + upsert, not a connector framework. *Alternative considered:* transactional replication / linked server — rejected as heavyweight for a nightly batch.
 
 ### Decision: Azure is upstream source only; gb10 stays canonical
 Transactions are read from Azure (already cloud-resident); all classification, decisions, evidence, and email/LLM processing remain on gb10. This keeps the privacy boundary intact — no new sensitive data leaves the host. Decisions are not written back to Azure.
+
+### Decision: Source is Azure SQL, read via an Entra service principal
+The upstream is an **Azure SQL Database** (`sqldb-home-automation` on `sql-epic-concept-dev-home-automation`, fed nightly by n8n) — not Postgres. The ingestion connects with `pyodbc` + the Microsoft ODBC driver (`msodbcsql18`) in the API container, authenticating with an **Entra service principal** (`finance-manager-gb10`) via `azure-identity` (`ClientSecretCredential` → access token, no SQL password). The SP has `db_datareader` only. The SP, the server's managed identity + Directory Readers grant, and the firewall allowlist are all codified in IaC (epic-concept-infra-platform); the contained DB user is a one-time data-plane `CREATE USER ... FROM EXTERNAL PROVIDER` + `db_datareader`. The local canonical store on gb10 remains Postgres (pgvector).
 
 ### Decision: Single nightly batch pipeline
 A scheduled job runs sync → classify-new → learn in sequence overnight. Matches a once-a-day source and avoids a long-running worker. Because agentic receipt hunts are slow, the classify step processes only *new, unclassified* transactions and may bound/queue the expensive gatherers; cheap gatherers (rules/history) resolve most volume once the cache is warm. *Alternative considered:* continuous workers — deferred until volume warrants.
@@ -56,6 +59,11 @@ Expose list/resolve endpoints + a minimal screen on the React skeleton. The lear
 6. Schedule the nightly pipeline (sync → classify → learn) on gb10; run the app as a service.
 
 Rollback: each piece is additive and independently disable-able (skip the schedule, skip the sync); no destructive changes to existing data.
+
+## Spike Results
+
+### 1.1 Azure connectivity — resolved: allowlist gb10's fixed home IP
+Investigated 2026-06-20 against the live host. **Finding:** gb10 has a **stable home public egress IP** — `45.11.63.27`, confirmed consistent across three independent IP-reflector services, on the home LAN (`192.168.0.188` via `192.168.0.1`). No Tailscale exit node or subnet router is needed. **Decision:** allowlist `45.11.63.27/32` as a single-IP rule in the Azure SQL firewall, require SSL, use a read-only DB role with a strong password. This is the simplest path with the narrowest network exposure (one IP). If the home IP ever changes, the fallback is a fixed-IP Tailscale exit node / Azure subnet router. **Remaining for 1.2:** add the read-only Azure connection string as a gitignored gb10 secret + config setting and verify a live SSL connection.
 
 ## Open Questions
 

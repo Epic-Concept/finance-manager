@@ -40,5 +40,15 @@ class Settings(BaseSettings):
     gmail_imap_host: str = "imap.gmail.com"
     gmail_imap_folder: str = "\\All"
 
+    # Azure SQL transactions source (read-only, Entra service principal).
+    # gb10's fixed home IP is allowlisted on the server; auth uses an SP token.
+    azure_sql_tenant_id: str = ""
+    azure_sql_client_id: str = ""
+    azure_sql_client_secret: str = ""
+    azure_sql_server: str = ""
+    azure_sql_database: str = ""
+    azure_sql_schema: str = "finance"
+    azure_sql_table: str = "bank_transactions"
+
 
 settings = Settings()
