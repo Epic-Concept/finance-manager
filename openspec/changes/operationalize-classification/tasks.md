@@ -30,12 +30,12 @@
 
 ## 5. Review and learning loop
 
-- [ ] 5.1 Review API: list pending review items (summary, proposed categorization, strength/reason, evidence)
-- [ ] 5.2 Review API: resolve an item (confirm / reclassify / mark internal-transfer) -> apply categorization, leave the queue
-- [ ] 5.3 Emit a human-confirmed learner observation on resolve (and for un-corrected auto-applies)
-- [ ] 5.4 Scheduled learner run over accumulated observations -> promote stable rules (off the hot path)
-- [ ] 5.5 Minimal review screen on the React skeleton (list + resolve)
-- [ ] 5.6 Tests: list/resolve behavior, observation emission, promotion from confirmations
+- [x] 5.1 Review API: list pending review items (summary, proposed categorization, strength/reason, evidence) — `ReviewService.list_pending` + `GET /api/v1/reviews`
+- [x] 5.2 Review API: resolve an item (confirm / reclassify / mark internal-transfer) -> apply categorization, leave the queue — `ReviewService.resolve` + `POST /api/v1/reviews/{id}/resolve` (sets category, confirmed, auto_apply)
+- [x] 5.3 Emit a human-confirmed learner observation on resolve (and for un-corrected auto-applies) — resolving sets `confirmed=True` (the persisted observation); `confirm()` for un-corrected auto-applies
+- [x] 5.4 Scheduled learner run over accumulated observations -> promote stable rules (off the hot path) — `run_learner_promotion` (reads confirmed decisions -> `ShadowLearner.propose_rules` -> rules) + `scripts/run_learner.py`
+- [ ] 5.5 Minimal review screen on the React skeleton (list + resolve) — DEFERRED (frontend; the API is ready)
+- [x] 5.6 Tests: list/resolve behavior, observation emission, promotion from confirmations — 8 tests green (router + service + promotion incl. idempotency & support guard); mypy --strict/ruff/black clean
 
 ## 6. Scheduling & operation on gb10
 
