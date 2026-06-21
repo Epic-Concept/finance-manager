@@ -10,7 +10,7 @@
 - [x] 2.3 Implement normalization (source columns -> canonical `Transaction`, exact-decimal amount) — `normalize_transaction()` (added `merchant_name` to `Transaction`; exact `Decimal(str(...))`; datetime→date)
 - [x] 2.4 Persist + advance the sync cursor only on success; leave unchanged on failure — cursor (`SyncState` table) + txns committed together; failure rolls back, cursor unchanged
 - [x] 2.5 Add a runnable sync entrypoint (CLI) suitable for scheduling — `python -m finance_api.scripts.sync_transactions`
-- [x] 2.6 Tests: incremental fetch, idempotency, normalization, failure-leaves-cursor (pure logic with a fake source) — 7 tests green (mypy --strict/ruff/black clean). NOTE: the one **live backfill** against Azure is deferred to deployment (group 6): needs `msodbcsql18`+`pyodbc` in the API image and migration 011 applied on gb10.
+- [x] 2.6 Tests: incremental fetch, idempotency, normalization, failure-leaves-cursor (pure logic with a fake source) — 7 tests green (mypy --strict/ruff/black clean). **Live backfill DONE**: 4435 transactions imported into gb10 Postgres from Azure SQL (migration 011 applied; msodbcsql18+pyodbc in the image).
 
 ## 3. Classification runtime
 
@@ -18,7 +18,7 @@
 - [x] 3.2 Implement the engine factory: compose policy + gatherers (rules/history/web/llm/agentic-receipt) from config; omit unconfigured backends — `factory.build_gatherers/build_engine` (rules+history always; llm/web/receipt gated on litellm + brave/gmail config)
 - [x] 3.3 Implement the daily classification job: classify new/unclassified transactions, persist decisions+splits+evidence, enqueue reviews; idempotent — `daily.run_daily_classification` (NOT EXISTS undecided filter; persists via `ClassificationDecisionRepository.record`; review = decisions with outcome=review)
 - [x] 3.4 Add a runnable classify entrypoint (CLI) for scheduling — `python -m finance_api.scripts.classify_transactions`
-- [x] 3.5 Tests: factory composition, history source, daily-job idempotency (fakes) — 11 tests green (mypy --strict/ruff/black clean). NOTE: the one **live end-to-end** is deferred to deployment (group 6), with group 2's live backfill.
+- [x] 3.5 Tests: factory composition, history source, daily-job idempotency (fakes) — 11 tests green (mypy --strict/ruff/black clean). **Live e2e DONE** on gb10: classify ran live (bounded), persisted decisions + queued reviews, and the new PRZELEW rule auto-applied 21 on re-run.
 
 ## 4. Cold-start bootstrap
 
@@ -39,6 +39,6 @@
 
 ## 6. Scheduling & operation on gb10
 
-- [ ] 6.1 Schedule the nightly pipeline (sync -> classify -> learn) via cron / systemd timer on gb10
-- [ ] 6.2 Run the API as a long-lived service on gb10 (compose), reachable over Tailscale
-- [ ] 6.3 Verify a full overnight cycle end-to-end on real data; document run/backup/restore ops
+- [x] 6.1 Schedule the nightly pipeline (sync -> classify -> learn) via cron / systemd timer on gb10 — `~/finance-manager/nightly.sh` + cron `30 5 * * *` (logs to nightly.log)
+- [x] 6.2 Run the API as a long-lived service on gb10 (compose), reachable over Tailscale — `finance-manager-api` (compose, `restart: unless-stopped`, healthy) on :8088 over Tailscale; image now ships msodbcsql18 + pyodbc
+- [x] 6.3 Verify a full overnight cycle end-to-end on real data; document run/backup/restore ops — live-verified each stage on real data (sync 4435 imported; bounded classify -> reviews; review resolve via API -> learner promoted a PRZELEW rule; re-classify auto-applied 21 via the rule). Runbook: `docs/operations-gb10.md`. NOTE: operator should run the interactive bootstrap (4.4) before the first full classify (no reprocessing).

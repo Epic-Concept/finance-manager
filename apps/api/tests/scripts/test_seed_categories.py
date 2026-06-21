@@ -4,7 +4,14 @@ from finance_api.scripts.seed_categories import CATEGORY_HIERARCHY
 
 # Valid values for seed data
 VALID_COMMITMENT_LEVELS = {0, 1, 2, 3, 4}
-VALID_FREQUENCIES = {"monthly", "weekly", "annual", "one-time", "quarterly"}
+VALID_FREQUENCIES = {
+    "monthly",
+    "weekly",
+    "annual",
+    "one-time",
+    "quarterly",
+    "irregular",  # e.g. internal transfers, which have no spend cadence
+}
 
 
 def count_categories(hierarchy: list) -> int:
@@ -86,13 +93,13 @@ class TestCategoryHierarchyCounts:
     """Tests for expected category counts."""
 
     def test_total_category_count(self) -> None:
-        """Test total number of categories is 117."""
+        """Total categories: 117 base + 4 internal-transfer (1 parent + 3 children)."""
         total = count_categories(CATEGORY_HIERARCHY)
-        assert total == 117, f"Expected 117 categories, got {total}"
+        assert total == 121, f"Expected 121 categories, got {total}"
 
     def test_top_level_category_count(self) -> None:
-        """Test number of top-level categories."""
-        assert len(CATEGORY_HIERARCHY) == 29
+        """Test number of top-level categories (28 base + Internal Transfer)."""
+        assert len(CATEGORY_HIERARCHY) == 30
 
     def test_categories_per_commitment_level(self) -> None:
         """Test distribution of categories across commitment levels."""
