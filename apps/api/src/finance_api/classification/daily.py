@@ -33,19 +33,22 @@ class DailyResult:
 
 
 def run_daily_classification(
-    session: Session, engine: ClassificationEngine
+    session: Session, engine: ClassificationEngine, limit: int | None = None
 ) -> DailyResult:
-    """Classify all undecided transactions and persist their decisions."""
+    """Classify undecided transactions and persist their decisions.
+
+    ``limit`` bounds how many are processed per run (useful for bounded/initial
+    runs); ``None`` processes all undecided transactions.
+    """
     repo = ClassificationDecisionRepository(session)
-    undecided = list(
-        session.scalars(
-            select(Transaction)
-            .where(
-                ~exists().where(ClassificationDecision.transaction_id == Transaction.id)
-            )
-            .order_by(Transaction.id)
-        )
+    stmt = (
+        select(Transaction)
+        .where(~exists().where(ClassificationDecision.transaction_id == Transaction.id))
+        .order_by(Transaction.id)
     )
+    if limit is not None:
+        stmt = stmt.limit(limit)
+    undecided = list(session.scalars(stmt))
 
     auto_applied = 0
     review = 0

@@ -98,3 +98,12 @@ def test_only_new_transactions_classified_on_second_run(db_session: Session) -> 
     result = run_daily_classification(db_session, FakeEngine())
     assert result.classified == 1
     assert db_session.query(ClassificationDecision).count() == 3
+
+
+def test_limit_bounds_classified_count(db_session: Session) -> None:
+    _seed(db_session)  # 2 transactions
+
+    result = run_daily_classification(db_session, FakeEngine(), limit=1)
+
+    assert result.classified == 1
+    assert db_session.query(ClassificationDecision).count() == 1

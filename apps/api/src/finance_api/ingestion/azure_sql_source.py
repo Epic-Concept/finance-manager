@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import struct
+import time
 import urllib.parse
 import urllib.request
 from collections.abc import Sequence
@@ -45,16 +46,41 @@ def _token_struct(token: str) -> bytes:
 
 
 class AzureSqlSource:
-    """Reads new transactions from the upstream Azure SQL database."""
+    """Reads new transactions from the upstream Azure SQL database.
 
-    def __init__(self, connect_timeout: int = 60) -> None:
+    The upstream is a serverless database that auto-pauses, so the first nightly
+    connection typically times out while it resumes; ``connect_retries`` retries
+    the connection (with ``resume_delay`` between attempts) to ride out the wake.
+    """
+
+    def __init__(
+        self,
+        connect_timeout: int = 60,
+        connect_retries: int = 5,
+        resume_delay: float = 20.0,
+    ) -> None:
         self._connect_timeout = connect_timeout
+        self._connect_retries = connect_retries
+        self._resume_delay = resume_delay
 
-    def fetch_since(self, cursor: datetime | None) -> Sequence[SourceTransaction]:
-        # Imported lazily so the package imports without the ODBC driver present
-        # (the driver only exists in the runtime image, not in unit-test/CI envs).
+    def _connect(self, conn_str: str, token: bytes):  # type: ignore[no-untyped-def]
         import pyodbc  # type: ignore[import-not-found]
 
+        last_error: Exception | None = None
+        for attempt in range(self._connect_retries):
+            try:
+                return pyodbc.connect(
+                    conn_str, attrs_before={_SQL_COPT_SS_ACCESS_TOKEN: token}
+                )
+            except pyodbc.OperationalError as exc:  # serverless resume / transient
+                last_error = exc
+                if attempt < self._connect_retries - 1:
+                    time.sleep(self._resume_delay)
+        raise last_error if last_error else RuntimeError("connect failed")
+
+    def fetch_since(self, cursor: datetime | None) -> Sequence[SourceTransaction]:
+        # pyodbc is imported lazily inside _connect so the package imports without
+        # the ODBC driver present (it only exists in the runtime image).
         conn_str = (
             "Driver={ODBC Driver 18 for SQL Server};"
             f"Server=tcp:{settings.azure_sql_server},1433;"
@@ -63,9 +89,7 @@ class AzureSqlSource:
         )
         token = _token_struct(_acquire_token())
         table = f"[{settings.azure_sql_schema}].[{settings.azure_sql_table}]"
-        with pyodbc.connect(
-            conn_str, attrs_before={_SQL_COPT_SS_ACCESS_TOKEN: token}
-        ) as conn:
+        with self._connect(conn_str, token) as conn:
             cur = conn.cursor()
             select = (
                 "SELECT transaction_id, transaction_date, amount, currency, "
