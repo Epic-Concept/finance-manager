@@ -33,6 +33,8 @@ dependencies = [
     # Transaction classification: local LLM via litellm + cloud (optional)
     "httpx>=0.26.0",
     "anthropic>=0.40.0",
+    # Ingestion: read the upstream Azure SQL transactions source (ODBC Driver 18)
+    "pyodbc>=5.1.0",
 ]
 
 [project.optional-dependencies]
