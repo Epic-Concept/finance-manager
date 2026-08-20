@@ -139,7 +139,12 @@ class InteractiveRefinementService:
         resolved_key = (
             api_key if api_key is not None else (settings.openai_api_key or None)
         )
-        self._client: OpenAIChatClient = client or OpenAI(api_key=resolved_key)
+        # OpenAI's typed client is structurally compatible at runtime; cast keeps
+        # mypy happy with the narrow Protocol used for test doubles.
+        if client is not None:
+            self._client: OpenAIChatClient = client
+        else:
+            self._client = cast(OpenAIChatClient, OpenAI(api_key=resolved_key))
         self._model = model or settings.openai_model
         self._temperature = temperature
         self._validation_service = validation_service or RuleValidationService()
