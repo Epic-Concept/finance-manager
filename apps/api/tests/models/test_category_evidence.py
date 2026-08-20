@@ -56,13 +56,13 @@ def test_category_evidence_with_ai_metadata() -> None:
         category_id=7,
         evidence_type="ai_inferred",
         confidence_score=Decimal("0.9500"),
-        model_used="claude-sonnet-4-5-20250514",
+        model_used="gpt-5.6-luna",
         raw_extraction='{"items": [{"name": "Book: Python Programming", "price": 29.99}]}',
     )
 
     assert evidence.evidence_type == "ai_inferred"
     assert evidence.confidence_score == Decimal("0.9500")
-    assert evidence.model_used == "claude-sonnet-4-5-20250514"
+    assert evidence.model_used == "gpt-5.6-luna"
     assert evidence.raw_extraction is not None
 
 

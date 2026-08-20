@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from finance_api.classification.cel import migrate_rule_expression
+from finance_api.core.config import settings
 from finance_api.db.session import get_db
 from finance_api.models.transaction import Transaction
 from finance_api.models.transaction_category import TransactionCategory
@@ -67,8 +68,11 @@ def get_rule_repo(
 
 
 def get_refinement_service() -> InteractiveRefinementService:
-    """Get interactive refinement service."""
-    return InteractiveRefinementService()
+    """Get interactive refinement service (OpenAI gpt-5.6-luna by default)."""
+    return InteractiveRefinementService(
+        api_key=settings.openai_api_key or None,
+        model=settings.openai_model,
+    )
 
 
 def get_clustering_service() -> TransactionClusteringService:

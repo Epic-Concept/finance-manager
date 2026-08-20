@@ -161,7 +161,7 @@ The Rule Discovery system helps build classification rules from transaction patt
 ### Workflow
 
 1. **Analyze clusters** - Group similar transactions by description patterns
-2. **Propose rules** - Use Claude to suggest regex patterns and categories
+2. **Propose rules** - Use OpenAI (`gpt-5.6-luna`) to suggest regex patterns and categories
 3. **Validate rules** - Test precision and false positives before approval
 4. **Apply rules** - Run batch classification on uncategorized transactions
 
@@ -173,7 +173,7 @@ Interactive rule discovery with LLM-powered proposals:
 
 ```bash
 cd apps/api
-PYTHONPATH=src ANTHROPIC_API_KEY="..." python -m finance_api.scripts.discover_rules
+PYTHONPATH=src OPENAI_API_KEY="..." python -m finance_api.scripts.discover_rules
 ```
 
 Options:
@@ -230,4 +230,5 @@ python -m finance_api.scripts.discover_rules --resume
 | `HOST` | Server host | `0.0.0.0` |
 | `PORT` | Server port | `8000` |
 | `DEBUG` | Debug mode | `false` |
-| `ANTHROPIC_API_KEY` | API key for Claude (rule discovery) | - |
+| `OPENAI_API_KEY` | API key for OpenAI (interactive refinement) | - |
+| `OPENAI_MODEL` | OpenAI model for refinement | `gpt-5.6-luna` |

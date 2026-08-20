@@ -30,6 +30,10 @@ class Settings(BaseSettings):
     litellm_max_tokens: int = 8192
     litellm_timeout_seconds: float = 120.0
 
+    # Cloud LLM (OpenAI) — optional; interactive rule refinement escape hatch
+    openai_api_key: str = ""
+    openai_model: str = "gpt-5.6-luna"
+
     # Brave Search API (web-lookup gatherer backend)
     brave_api_key: str = ""
     brave_base_url: str = "https://api.search.brave.com/res/v1/web/search"

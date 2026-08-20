@@ -1,13 +1,15 @@
 """InteractiveRefinementService for multi-turn conversational rule refinement."""
 
+from __future__ import annotations
+
 import json
 import re
 from dataclasses import dataclass
-from typing import cast
+from typing import Any, Protocol, cast
 
-from anthropic import Anthropic
-from anthropic.types import MessageParam
+from openai import OpenAI
 
+from finance_api.core.config import settings
 from finance_api.models.category import Category
 from finance_api.models.transaction import Transaction
 from finance_api.services.rule_validation_service import (
@@ -41,6 +43,22 @@ class InteractiveRefinementError(Exception):
     """Raised when interactive refinement fails."""
 
     pass
+
+
+class _ChatCompletionsAPI(Protocol):
+    def create(self, **kwargs: Any) -> Any: ...
+
+
+class _ChatAPI(Protocol):
+    @property
+    def completions(self) -> _ChatCompletionsAPI: ...
+
+
+class OpenAIChatClient(Protocol):
+    """Minimal OpenAI client surface used by this service."""
+
+    @property
+    def chat(self) -> _ChatAPI: ...
 
 
 REFINEMENT_SYSTEM_PROMPT = """You are a transaction classification expert helping to create CEL (Common Expression Language) predicates for categorizing bank transactions.
@@ -104,20 +122,25 @@ class InteractiveRefinementService:
     def __init__(
         self,
         api_key: str | None = None,
-        model: str = "claude-sonnet-4-5-20250929",
+        model: str | None = None,
         temperature: float = 0.3,
         validation_service: RuleValidationService | None = None,
+        client: OpenAIChatClient | None = None,
     ) -> None:
         """Initialize the service.
 
         Args:
-            api_key: Anthropic API key. If None, uses ANTHROPIC_API_KEY env var.
-            model: Claude model to use for conversations.
+            api_key: OpenAI API key. If None, uses settings / OPENAI_API_KEY.
+            model: OpenAI model to use for conversations (default: gpt-5.6-luna).
             temperature: Temperature for LLM responses.
             validation_service: Service for validating proposed patterns.
+            client: Optional injected OpenAI-compatible client (for tests).
         """
-        self._client = Anthropic(api_key=api_key)
-        self._model = model
+        resolved_key = (
+            api_key if api_key is not None else (settings.openai_api_key or None)
+        )
+        self._client: OpenAIChatClient = client or OpenAI(api_key=resolved_key)
+        self._model = model or settings.openai_model
         self._temperature = temperature
         self._validation_service = validation_service or RuleValidationService()
 
@@ -151,6 +174,25 @@ class InteractiveRefinementService:
             sample_descriptions=samples,
             category_list=category_list,
         )
+
+    def _complete(
+        self,
+        system_prompt: str,
+        messages: list[dict[str, str]],
+    ) -> str:
+        """Call the OpenAI chat completions API and return assistant text."""
+        openai_messages: list[dict[str, str]] = [
+            {"role": "system", "content": system_prompt},
+            *messages,
+        ]
+        response = self._client.chat.completions.create(
+            model=self._model,
+            messages=openai_messages,
+            max_completion_tokens=2048,
+            temperature=self._temperature,
+        )
+        content = response.choices[0].message.content
+        return content or ""
 
     def _parse_response(
         self, response_text: str, categories: list[Category]
@@ -229,25 +271,17 @@ class InteractiveRefinementService:
             InteractiveRefinementError: If LLM call fails.
         """
         system_prompt = self._build_system_prompt(cluster, categories)
-        messages: list[MessageParam] = [
+        messages: list[dict[str, str]] = [
             {
                 "role": "user",
-                "content": "Please analyze this cluster and propose classification rules.",
+                "content": (
+                    "Please analyze this cluster and propose classification rules."
+                ),
             }
         ]
 
         try:
-            # Anthropic SDK 1.x dropped `temperature` from typed create(); pass via
-            # extra_body so sampling still works without breaking mypy.
-            response = self._client.messages.create(
-                model=self._model,
-                max_tokens=2048,
-                system=system_prompt,
-                messages=messages,
-                extra_body={"temperature": self._temperature},
-            )
-            first_block = response.content[0]
-            response_text = first_block.text if hasattr(first_block, "text") else ""
+            response_text = self._complete(system_prompt, messages)
             return self._parse_response(response_text, categories)
 
         except Exception as e:
@@ -277,11 +311,11 @@ class InteractiveRefinementService:
         system_prompt = self._build_system_prompt(cluster, categories)
 
         # Build messages list from history
-        messages: list[MessageParam] = []
+        messages: list[dict[str, str]] = []
         for msg in conversation_history:
             messages.append(
                 cast(
-                    MessageParam,
+                    dict[str, str],
                     {"role": msg["role"], "content": msg["content"]},
                 )
             )
@@ -290,15 +324,7 @@ class InteractiveRefinementService:
         messages.append({"role": "user", "content": user_message})
 
         try:
-            response = self._client.messages.create(
-                model=self._model,
-                max_tokens=2048,
-                system=system_prompt,
-                messages=messages,
-                extra_body={"temperature": self._temperature},
-            )
-            first_block = response.content[0]
-            response_text = first_block.text if hasattr(first_block, "text") else ""
+            response_text = self._complete(system_prompt, messages)
             return self._parse_response(response_text, categories)
 
         except Exception as e:
