@@ -115,14 +115,6 @@ jobs:
 
       - name: Submit to stores
         if: steps.inputs.outputs.submit == 'true' && steps.inputs.outputs.profile == 'production'
-        env:
-          # Optional: only needed if EAS must re-create iOS credentials in CI.
-          # Prefer configuring Apple creds once via `eas credentials` (remote).
-          EXPO_ASC_API_KEY_PATH: ${{ secrets.EXPO_ASC_API_KEY_PATH }}
-          EXPO_ASC_KEY_ID: ${{ secrets.EXPO_ASC_KEY_ID }}
-          EXPO_ASC_ISSUER_ID: ${{ secrets.EXPO_ASC_ISSUER_ID }}
-          EXPO_APPLE_TEAM_ID: ${{ secrets.EXPO_APPLE_TEAM_ID }}
-          EXPO_APPLE_TEAM_TYPE: ${{ secrets.EXPO_APPLE_TEAM_TYPE }}
         run: |
           eas submit \
             --platform "${{ steps.inputs.outputs.platform }}" \
