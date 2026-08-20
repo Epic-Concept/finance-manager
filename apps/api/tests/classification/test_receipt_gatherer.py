@@ -11,8 +11,8 @@ from decimal import Decimal
 from finance_api.classification.evidence import EvidenceType, StrengthTier
 from finance_api.classification.gatherer import GatherContext
 from finance_api.classification.gatherers.llm_inference import CategoryRef
+from finance_api.classification.gatherers.mailbox import EmailCandidate
 from finance_api.classification.gatherers.receipt import (
-    EmailCandidate,
     ReceiptGatherer,
 )
 from finance_api.classification.receipt import ReceiptExtractor

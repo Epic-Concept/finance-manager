@@ -31,6 +31,7 @@ class RulePattern:
     pattern: str
     category_id: int
     name: str
+    requires_disambiguation: bool = False
 
 
 class RuleSource(Protocol):
@@ -64,6 +65,7 @@ class RuleGatherer(Gatherer):
                         source=f"rule:{rule.name}",
                         strength=StrengthTier.PROOF,
                         itemized=False,
+                        requires_receipt=rule.requires_disambiguation,
                     )
                 ]
         return []

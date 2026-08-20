@@ -22,6 +22,7 @@ def _ev(
     etype: EvidenceType = EvidenceType.RULE,
     itemized: bool = False,
     source: str = "src",
+    requires_receipt: bool = False,
 ) -> Evidence:
     return Evidence(
         claim=claim,
@@ -29,6 +30,7 @@ def _ev(
         source=source,
         strength=strength,
         itemized=itemized,
+        requires_receipt=requires_receipt,
     )
 
 
@@ -58,6 +60,34 @@ class TestSingleCategory:
             MerchantClass.SINGLE_CATEGORY,
         )
         assert d.outcome is Outcome.REVIEW
+
+    def test_rule_requires_receipt_blocks_auto_apply_until_receipt(self) -> None:
+        policy = EvidencePolicy()
+        claim = Claim.single_category(5)
+        rule_only = _ev(
+            claim,
+            StrengthTier.PROOF,
+            EvidenceType.RULE,
+            requires_receipt=True,
+            source="rule:amazon",
+        )
+        d = policy.decide([rule_only], MerchantClass.SINGLE_CATEGORY)
+        assert d.outcome is Outcome.REVIEW
+        assert d.reason == "rule_requires_receipt"
+
+    def test_rule_with_receipt_can_auto_apply(self) -> None:
+        policy = EvidencePolicy()
+        claim = Claim.single_category(5)
+        rule = _ev(
+            claim,
+            StrengthTier.PROOF,
+            EvidenceType.RULE,
+            requires_receipt=True,
+            source="rule:amazon",
+        )
+        receipt = _ev(claim, StrengthTier.STRONG, EvidenceType.RECEIPT)
+        d = policy.decide([rule, receipt], MerchantClass.SINGLE_CATEGORY)
+        assert d.outcome is Outcome.AUTO_APPLY
 
 
 class TestSplittable:

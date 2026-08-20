@@ -164,3 +164,36 @@ class TestAgenticReceiptGatherer:
         gatherer = AgenticReceiptGatherer(chat, [mailbox], CATEGORIES)
         gatherer.gather(_ctx())
         assert captured.get("read_body_seen") is True
+
+    def test_multi_mailbox_search_degrades_proof_to_strong(self) -> None:
+        wife = _FakeMailbox(
+            "wife@x.com",
+            [
+                RawEmail(
+                    "m1",
+                    "wife@x.com",
+                    "Your Amazon order",
+                    "total GBP 20.00",
+                    date(2026, 6, 9),
+                )
+            ],
+        )
+        husband = _FakeMailbox(
+            "husband@x.com",
+            [
+                RawEmail(
+                    "m2",
+                    "husband@x.com",
+                    "Your Amazon order",
+                    "total GBP 20.00",
+                    date(2026, 6, 9),
+                )
+            ],
+        )
+        chat = _chat(
+            _tool("search_mailbox", {"query": "amazon", "days": 7}),
+            _found_items(),
+        )
+        gatherer = AgenticReceiptGatherer(chat, [wife, husband], CATEGORIES)
+        ev = gatherer.gather(_ctx("20.00"))[0]
+        assert ev.strength is StrengthTier.STRONG

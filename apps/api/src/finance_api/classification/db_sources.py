@@ -68,6 +68,7 @@ class DbRuleSource:
                 pattern=rule.rule_expression,
                 category_id=rule.category_id,
                 name=rule.name,
+                requires_disambiguation=rule.requires_disambiguation,
             )
             for rule in self._session.scalars(stmt)
         ]

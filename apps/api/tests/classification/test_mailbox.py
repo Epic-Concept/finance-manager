@@ -13,6 +13,8 @@ from finance_api.classification.gatherer import GatherContext
 from finance_api.classification.gatherers.mailbox import (
     MultiMailboxSource,
     RawEmail,
+    amount_search_terms,
+    combined_search_terms,
     merchant_terms,
     strip_html,
 )
@@ -76,6 +78,19 @@ class TestMerchantTerms:
         assert "RT4" not in terms
 
 
+class TestAmountSearchTerms:
+    def test_includes_formatted_amount_and_currency_variants(self) -> None:
+        terms = amount_search_terms(Decimal("20.00"), "GBP")
+        assert "20.00" in terms
+        assert "20.00 GBP" in terms
+        assert "GBP 20.00" in terms
+
+    def test_combined_terms_include_merchant_and_amount(self) -> None:
+        terms = combined_search_terms("AMZN MKTP", Decimal("20.00"), "GBP")
+        assert "AMZN" in terms
+        assert "20.00" in terms
+
+
 class TestMultiMailboxSource:
     def test_aggregates_candidates_across_mailboxes(self) -> None:
         gmail = _FakeClient("gmail:me", [_email("gmail:me", "g1", date(2026, 6, 9))])
@@ -102,7 +117,7 @@ class TestMultiMailboxSource:
         gmail = _FakeClient("gmail:me", [_email("gmail:me", "g1", date(2026, 6, 1))])
         source = MultiMailboxSource([gmail], window_days=5, wide_window_days=14)
         candidates = source.find_candidates(_context())
-        assert len(gmail.queries) == 2  # narrow, then widened
+        assert len(gmail.queries) == 3  # narrow combined, narrow amount-only, wide
         assert candidates and candidates[0].message_id == "g1"
 
     def test_returns_empty_when_nothing_found_even_after_widening(self) -> None:

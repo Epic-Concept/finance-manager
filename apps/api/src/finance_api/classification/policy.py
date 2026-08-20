@@ -19,7 +19,12 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
 
-from finance_api.classification.evidence import Claim, Evidence, StrengthTier
+from finance_api.classification.evidence import (
+    Claim,
+    Evidence,
+    EvidenceType,
+    StrengthTier,
+)
 
 
 class MerchantClass(Enum):
@@ -59,6 +64,15 @@ DEFAULT_REQUIRED_TIER: dict[tuple[MerchantClass, bool], StrengthTier] = {
     (MerchantClass.SPLITTABLE, False): StrengthTier.PROOF,
     (MerchantClass.SPLITTABLE, True): StrengthTier.PROOF,
 }
+
+
+def _pending_receipt_confirmation(supporting: tuple[Evidence, ...]) -> bool:
+    """True when a rule match still needs receipt corroboration."""
+    needs_receipt = any(
+        e.evidence_type is EvidenceType.RULE and e.requires_receipt for e in supporting
+    )
+    has_receipt = any(e.evidence_type is EvidenceType.RECEIPT for e in supporting)
+    return needs_receipt and not has_receipt
 
 
 class EvidencePolicy:
@@ -121,6 +135,15 @@ class EvidencePolicy:
         if merchant_class is MerchantClass.SPLITTABLE and not is_split:
             return Decision(
                 Outcome.REVIEW, winning, top, "splittable_requires_itemized", supporting
+            )
+
+        if _pending_receipt_confirmation(supporting):
+            return Decision(
+                Outcome.REVIEW,
+                winning,
+                top,
+                "rule_requires_receipt",
+                supporting,
             )
 
         required = self.required_tier(merchant_class, is_split)

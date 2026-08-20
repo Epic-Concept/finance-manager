@@ -121,3 +121,13 @@ class TestRuleGatherer:
             account_name="Personal",
         )
         assert gatherer.gather(other) == []
+
+    def test_requires_disambiguation_sets_requires_receipt(self) -> None:
+        gatherer = RuleGatherer(
+            _FakeRuleSource(
+                [RulePattern(r"(?i)amzn", 1, "amazon", requires_disambiguation=True)]
+            )
+        )
+        ev = gatherer.gather(_context("AMZN MKTP"))[0]
+        assert ev.strength is StrengthTier.PROOF
+        assert ev.requires_receipt is True

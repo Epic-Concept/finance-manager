@@ -11,13 +11,13 @@ from __future__ import annotations
 
 import html
 import re
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import date, timedelta
 from decimal import Decimal
 from typing import Protocol
 
 from finance_api.classification.gatherer import GatherContext
-from finance_api.classification.gatherers.receipt import EmailCandidate
 
 # Tokens too short or non-alphabetic to be useful merchant search terms.
 _MIN_TERM_LEN = 4
@@ -70,6 +70,42 @@ def merchant_terms(description: str) -> list[str]:
     return list(seen)
 
 
+def amount_search_terms(amount: Decimal, currency: str = "") -> list[str]:
+    """Build IMAP TEXT search terms for a transaction amount."""
+    terms: list[str] = []
+    normalized = f"{amount:.2f}"
+    terms.append(normalized)
+    if amount == amount.to_integral_value():
+        terms.append(str(int(amount)))
+    currency = (currency or "").strip().upper()
+    if currency:
+        terms.append(f"{normalized} {currency}")
+        terms.append(f"{currency} {normalized}")
+    seen: dict[str, None] = {}
+    for term in terms:
+        seen.setdefault(term, None)
+    return list(seen)
+
+
+def combined_search_terms(
+    description: str, amount: Decimal, currency: str = ""
+) -> list[str]:
+    """Merchant + amount terms for a receipt search (deduplicated)."""
+    seen: dict[str, None] = {}
+    for term in merchant_terms(description) + amount_search_terms(amount, currency):
+        seen.setdefault(term, None)
+    return list(seen)
+
+
+@dataclass(frozen=True)
+class EmailCandidate:
+    """A candidate receipt email found for a transaction."""
+
+    text: str
+    mailbox: str
+    message_id: str
+
+
 @dataclass(frozen=True)
 class RawEmail:
     """A raw email returned by a mailbox client."""
@@ -98,13 +134,18 @@ class MultiMailboxSource:
 
     def __init__(
         self,
-        clients: list[MailboxClient],
+        clients: Sequence[MailboxClient],
         window_days: int = 5,
         wide_window_days: int = 14,
     ) -> None:
-        self._clients = clients
+        self._clients = list(clients)
         self._window_days = window_days
         self._wide_window_days = wide_window_days
+
+    @property
+    def clients(self) -> tuple[MailboxClient, ...]:
+        """The mailbox clients searched by this source."""
+        return tuple(self._clients)
 
     def _search_window(
         self, terms: list[str], center: date, days: int
@@ -117,12 +158,21 @@ class MultiMailboxSource:
         return results
 
     def find_candidates(self, context: GatherContext) -> list[EmailCandidate]:
-        terms = merchant_terms(context.description)
+        terms = combined_search_terms(
+            context.description, context.amount, context.currency
+        )
+        amount_only = amount_search_terms(context.amount, context.currency)
         center = context.transaction_date
 
         emails = self._search_window(terms, center, self._window_days)
+        if not emails and amount_only:
+            emails = self._search_window(amount_only, center, self._window_days)
         if not emails and self._wide_window_days > self._window_days:
             emails = self._search_window(terms, center, self._wide_window_days)
+            if not emails and amount_only:
+                emails = self._search_window(
+                    amount_only, center, self._wide_window_days
+                )
 
         candidates = [
             EmailCandidate(
