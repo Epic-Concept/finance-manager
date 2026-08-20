@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import logging
+from collections.abc import Sequence
 from datetime import timedelta
 from decimal import Decimal, InvalidOperation
 from typing import Any
@@ -101,13 +102,13 @@ class AgenticReceiptGatherer(Gatherer):
     def __init__(
         self,
         chat_fn: ChatFn,
-        mailbox_clients: list[MailboxClient],
+        mailbox_clients: Sequence[MailboxClient],
         categories: list[CategoryRef],
         max_iterations: int = 8,
         default_days: int = 7,
     ) -> None:
         self._chat = chat_fn
-        self._clients = mailbox_clients
+        self._clients = list(mailbox_clients)
         self._categories = categories
         self._valid_ids = {c.id for c in categories}
         self._max_iterations = max_iterations

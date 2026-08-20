@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import html
 import re
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import date, timedelta
 from decimal import Decimal
@@ -133,18 +134,18 @@ class MultiMailboxSource:
 
     def __init__(
         self,
-        clients: list[MailboxClient],
+        clients: Sequence[MailboxClient],
         window_days: int = 5,
         wide_window_days: int = 14,
     ) -> None:
-        self._clients = clients
+        self._clients = list(clients)
         self._window_days = window_days
         self._wide_window_days = wide_window_days
 
     @property
-    def clients(self) -> list[MailboxClient]:
+    def clients(self) -> tuple[MailboxClient, ...]:
         """The mailbox clients searched by this source."""
-        return list(self._clients)
+        return tuple(self._clients)
 
     def _search_window(
         self, terms: list[str], center: date, days: int
