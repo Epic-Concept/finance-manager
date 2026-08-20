@@ -169,7 +169,9 @@ class MultiMailboxSource:
         if not emails and self._wide_window_days > self._window_days:
             emails = self._search_window(terms, center, self._wide_window_days)
             if not emails and amount_only:
-                emails = self._search_window(amount_only, center, self._wide_window_days)
+                emails = self._search_window(
+                    amount_only, center, self._wide_window_days
+                )
 
         candidates = [
             EmailCandidate(

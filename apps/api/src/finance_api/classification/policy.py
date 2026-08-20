@@ -19,7 +19,12 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
 
-from finance_api.classification.evidence import Claim, Evidence, EvidenceType, StrengthTier
+from finance_api.classification.evidence import (
+    Claim,
+    Evidence,
+    EvidenceType,
+    StrengthTier,
+)
 
 
 class MerchantClass(Enum):

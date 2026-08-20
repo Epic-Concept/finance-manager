@@ -22,9 +22,9 @@ from finance_api.classification.evidence import (
     StrengthTier,
 )
 from finance_api.classification.gatherer import GatherContext, Gatherer
+from finance_api.classification.gatherers.llm_inference import CategoryRef
 from finance_api.classification.gatherers.mailbox import EmailCandidate
 from finance_api.classification.gatherers.mailbox_session import imap_session
-from finance_api.classification.gatherers.llm_inference import CategoryRef
 from finance_api.classification.receipt import (
     ReceiptExtractionError,
     ReceiptExtractor,
