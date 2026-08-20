@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from datetime import datetime
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 
 import pytest
 from sqlalchemy.orm import Session
@@ -93,7 +93,7 @@ def test_failed_sync_rolls_back_and_keeps_cursor(db_session: Session) -> None:
     ]
     svc = TransactionSyncService(db_session)
 
-    with pytest.raises(Exception):
+    with pytest.raises(InvalidOperation):
         svc.sync(FakeSource(rows))
 
     assert db_session.query(Transaction).count() == 0  # good row rolled back too

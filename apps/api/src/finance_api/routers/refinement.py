@@ -7,6 +7,7 @@ from typing import Annotated, Any
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
+from finance_api.classification.cel import migrate_rule_expression
 from finance_api.db.session import get_db
 from finance_api.models.transaction import Transaction
 from finance_api.models.transaction_category import TransactionCategory
@@ -482,7 +483,7 @@ async def accept_proposal(
     # Create classification rule from proposal
     rule = rule_repo.create(
         name=f"Rule from proposal {proposal_id}",
-        rule_expression=f'description =~ "{proposal.proposed_pattern}"',
+        rule_expression=migrate_rule_expression(proposal.proposed_pattern),
         category_id=proposal.proposed_category_id,
         priority=100,
     )

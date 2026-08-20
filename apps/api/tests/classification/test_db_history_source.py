@@ -8,13 +8,13 @@ from decimal import Decimal
 from sqlalchemy.orm import Session
 
 from finance_api.classification.db_sources import DbHistorySource
-from finance_api.classification.policy import Decision, MerchantClass, Outcome
 from finance_api.classification.evidence import Claim, StrengthTier
+from finance_api.classification.policy import Decision, MerchantClass, Outcome
+from finance_api.models.category import Category
+from finance_api.models.transaction import Transaction
 from finance_api.repositories.classification_decision_repository import (
     ClassificationDecisionRepository,
 )
-from finance_api.models.category import Category
-from finance_api.models.transaction import Transaction
 
 
 def _cat(session: Session, category_id: int) -> None:

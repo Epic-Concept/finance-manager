@@ -2,8 +2,15 @@
 
 import re
 from dataclasses import dataclass, field
+from datetime import date
 from decimal import Decimal
 
+from finance_api.classification.cel import (
+    CelEvaluator,
+    activation_from_transaction,
+    looks_like_cel,
+    migrate_rule_expression,
+)
 from finance_api.models.classification_rule import ClassificationRule
 from finance_api.models.transaction import Transaction
 from finance_api.repositories.classification_rule_repository import (
@@ -25,6 +32,8 @@ class ValidationResult:
     sample_false_positives: list[str] = field(default_factory=list)
     is_valid_regex: bool = True
     regex_error: str | None = None
+    also_matches: int = 0  # unlabelled matches outside the cohort
+    labelled_false_positives: int = 0  # matches labelled as a different nominal
 
 
 @dataclass
@@ -49,15 +58,18 @@ class RuleValidationService:
         self,
         rule_repository: ClassificationRuleRepository | None = None,
         max_samples: int = 5,
+        evaluator: CelEvaluator | None = None,
     ) -> None:
         """Initialize the validation service.
 
         Args:
             rule_repository: Repository for accessing existing rules.
             max_samples: Maximum number of sample descriptions to return.
+            evaluator: CEL evaluator (compile-once, skip-invalid).
         """
         self._rule_repository = rule_repository
         self._max_samples = max_samples
+        self._evaluator = evaluator or CelEvaluator()
 
     def validate_regex(self, pattern: str) -> tuple[bool, str | None]:
         """Validate that a pattern is a valid regex.
@@ -90,52 +102,56 @@ class RuleValidationService:
         Returns:
             ValidationResult with precision metrics and samples.
         """
-        # First validate the regex
-        is_valid, error = self.validate_regex(pattern)
-        if not is_valid:
-            return ValidationResult(
-                pattern=pattern,
-                total_matches=0,
-                true_positives=0,
-                false_positives=0,
-                precision=Decimal("0"),
-                coverage=Decimal("0"),
-                is_valid_regex=False,
-                regex_error=error,
-            )
+        if looks_like_cel(pattern):
+            if self._evaluator.compile(pattern) is None:
+                return ValidationResult(
+                    pattern=pattern,
+                    total_matches=0,
+                    true_positives=0,
+                    false_positives=0,
+                    precision=Decimal("0"),
+                    coverage=Decimal("0"),
+                    is_valid_regex=False,
+                    regex_error="invalid CEL",
+                )
+        else:
+            is_valid, error = self.validate_regex(pattern)
+            if not is_valid:
+                return ValidationResult(
+                    pattern=pattern,
+                    total_matches=0,
+                    true_positives=0,
+                    false_positives=0,
+                    precision=Decimal("0"),
+                    coverage=Decimal("0"),
+                    is_valid_regex=False,
+                    regex_error=error,
+                )
 
-        try:
-            compiled = re.compile(pattern)
-        except re.error as e:
-            return ValidationResult(
-                pattern=pattern,
-                total_matches=0,
-                true_positives=0,
-                false_positives=0,
-                precision=Decimal("0"),
-                coverage=Decimal("0"),
-                is_valid_regex=False,
-                regex_error=str(e),
-            )
-
-        # Test against all transactions
         true_positives: list[Transaction] = []
         false_positives: list[Transaction] = []
+        labelled_false_positives: list[Transaction] = []
+        also_matches: list[Transaction] = []
 
         for txn in all_transactions:
             if not txn.description:
                 continue
-
-            if compiled.search(txn.description):
-                if txn.id in cluster_transaction_ids:
-                    true_positives.append(txn)
+            matched = self._evaluator.matches(pattern, activation_from_transaction(txn))
+            if matched is not True:
+                continue
+            if txn.id in cluster_transaction_ids:
+                true_positives.append(txn)
+            else:
+                false_positives.append(txn)
+                labelled = getattr(txn, "confirmed_category_id", None)
+                if isinstance(labelled, int):
+                    labelled_false_positives.append(txn)
                 else:
-                    false_positives.append(txn)
+                    also_matches.append(txn)
 
         total_matches = len(true_positives) + len(false_positives)
         cluster_size = len(cluster_transaction_ids)
 
-        # Calculate metrics
         precision = (
             Decimal(len(true_positives)) / Decimal(total_matches)
             if total_matches > 0
@@ -147,7 +163,6 @@ class RuleValidationService:
             else Decimal("0")
         )
 
-        # Collect samples
         sample_tp = [
             t.description for t in true_positives[: self._max_samples] if t.description
         ]
@@ -156,7 +171,7 @@ class RuleValidationService:
         ]
 
         return ValidationResult(
-            pattern=pattern,
+            pattern=migrate_rule_expression(pattern),
             total_matches=total_matches,
             true_positives=len(true_positives),
             false_positives=len(false_positives),
@@ -164,6 +179,8 @@ class RuleValidationService:
             coverage=coverage.quantize(Decimal("0.0001")),
             sample_true_positives=sample_tp,
             sample_false_positives=sample_fp,
+            also_matches=len(also_matches),
+            labelled_false_positives=len(labelled_false_positives),
         )
 
     def calculate_precision(self, true_positives: int, false_positives: int) -> Decimal:
@@ -218,17 +235,13 @@ class RuleValidationService:
         if max_samples is None:
             max_samples = self._max_samples
 
-        try:
-            compiled = re.compile(pattern)
-        except re.error:
-            return []
-
         samples: list[str] = []
         for txn in all_transactions:
             if not txn.description:
                 continue
             if (
-                compiled.search(txn.description)
+                self._evaluator.matches(pattern, activation_from_transaction(txn))
+                is True
                 and txn.id not in cluster_transaction_ids
             ):
                 samples.append(txn.description)
@@ -254,46 +267,33 @@ class RuleValidationService:
         if self._rule_repository is None:
             return ConflictResult(has_conflicts=False)
 
-        try:
-            new_compiled = re.compile(pattern)
-        except re.error:
-            return ConflictResult(has_conflicts=False)
-
-        # Get all active rules
-        existing_rules = self._rule_repository.get_active_by_priority()
-
-        # Find transactions that match the new pattern
         new_matches: set[int] = set()
         for txn in all_transactions:
-            if txn.description and new_compiled.search(txn.description):
+            if (
+                self._evaluator.matches(pattern, activation_from_transaction(txn))
+                is True
+            ):
                 new_matches.add(txn.id)
 
         if not new_matches:
             return ConflictResult(has_conflicts=False)
 
-        # Check for overlap with existing rules
+        existing_rules = self._rule_repository.get_active_by_priority()
         conflicting: list[ClassificationRule] = []
         overlaps: dict[int, int] = {}
 
         for rule in existing_rules:
-            # Extract pattern from rule expression
-            # Rule expressions use format: description =~ "pattern"
-            rule_pattern = self._extract_pattern_from_expression(rule.rule_expression)
-            if not rule_pattern:
-                continue
-
-            try:
-                rule_compiled = re.compile(rule_pattern)
-            except re.error:
-                continue
-
-            # Count overlapping transactions
             overlap_count = 0
             for txn in all_transactions:
-                if txn.id in new_matches and txn.description:
-                    if rule_compiled.search(txn.description):
-                        overlap_count += 1
-
+                if txn.id not in new_matches:
+                    continue
+                if (
+                    self._evaluator.matches(
+                        rule.rule_expression, activation_from_transaction(txn)
+                    )
+                    is True
+                ):
+                    overlap_count += 1
             if overlap_count > 0:
                 conflicting.append(rule)
                 overlaps[rule.id] = overlap_count
@@ -331,7 +331,12 @@ class RuleValidationService:
         Returns:
             True if pattern matches, False otherwise.
         """
-        try:
-            return bool(re.search(pattern, description))
-        except re.error:
-            return False
+        dummy = Transaction(
+            transaction_date=date(2026, 1, 1),
+            description=description,
+            amount=Decimal("0"),
+            currency="GBP",
+        )
+        return (
+            self._evaluator.matches(pattern, activation_from_transaction(dummy)) is True
+        )

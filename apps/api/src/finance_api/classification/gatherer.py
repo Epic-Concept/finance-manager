@@ -30,6 +30,7 @@ class GatherContext:
     currency: str
     transaction_date: date
     account_name: str | None = None
+    merchant_name: str | None = None
 
 
 class Gatherer(ABC):

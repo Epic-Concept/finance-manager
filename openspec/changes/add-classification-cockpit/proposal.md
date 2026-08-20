@@ -1,3 +1,5 @@
+**Blocked on redirect:** do not implement the daily queue as one card per transaction. Product rethink is in `openspec/changes/autonomous-household-ledger/` (ADR-002). Keep Quiet Ledger visual language and the focus-card ritual; the payload becomes a **cohort** (group + CEL predicate + dry-run), with per-row cards only for residuals. Shell/tokens (tasks 1.x) may still proceed; tasks 3–4 wait on cohort-discovery + autonomous-review.
+
 ## Why
 
 The classifier is operational, but every human-in-the-loop step is a CLI or a chat transcript: cold-start bootstrap is an interactive terminal session (or pasting tables into a conversation), and resolving the review queue is raw API calls. That doesn't scale to supervising hundreds of merchant decisions, and it makes the one thing only a human can do — confirming categories — the slowest part of the loop. We need a **cockpit**: a calm, fast surface that turns supervising the classifier into a short, repeatable ritual, so coverage grows without the human dreading it.

@@ -7,6 +7,7 @@ This directory contains Architecture Decision Records (ADRs) documenting signifi
 | ADR | Title | Status |
 |-----|-------|--------|
 | [ADR-001](./adr-001-monorepo-structure.md) | Monorepo Structure | Accepted |
+| [ADR-002](./adr-002-autonomous-household-ledger.md) | Autonomous Household Ledger | Proposed |
 
 ## Template
 
@@ -25,5 +26,5 @@ What is the issue that we're seeing that motivates this decision?
 What is the change that we're proposing and/or doing?
 
 ## Consequences
-What becomes easier or more difficult to do because of this change?
+What becomes easier or more difficult to do because of this decision?
 ```

@@ -7,7 +7,7 @@ from decimal import Decimal
 
 from sqlalchemy.orm import Session
 
-from finance_api.classification.evidence import Claim, StrengthTier
+from finance_api.classification.evidence import StrengthTier
 from finance_api.classification.policy import Decision, MerchantClass, Outcome
 from finance_api.classification.review import ReviewService
 from finance_api.models.category import Category

@@ -66,6 +66,8 @@ class TestRulePromotion:
         assert proposals[0].merchant_key == "GREGGS"
         assert proposals[0].category_id == 9
         assert proposals[0].support == 3
+        assert "matches" in proposals[0].expression
+        assert "GREGGS" in proposals[0].expression
 
     def test_below_min_observations_no_proposal(self) -> None:
         learner = ShadowLearner(min_observations=3)

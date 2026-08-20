@@ -1,9 +1,9 @@
 """DB-backed gatherer sources and rule application.
 
 Closes the bootstrap loop: confirmed cluster proposals are written as
-``ClassificationRule`` rows (the ``rule_expression`` column now holds a regex,
-not the retired rule-engine syntax), and ``DbRuleSource`` reads them back as the
-``RulePattern`` list the ``RuleGatherer`` consumes.
+``ClassificationRule`` rows (``rule_expression`` holds CEL), and
+``DbRuleSource`` reads them back as the ``RulePattern`` list the
+``RuleGatherer`` consumes. Legacy regex strings are migrated on write.
 """
 
 from __future__ import annotations
@@ -14,6 +14,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from finance_api.classification.bootstrap import ClusterProposal
+from finance_api.classification.cel import migrate_rule_expression
 from finance_api.classification.gatherers.history import HistoryOutcome
 from finance_api.classification.gatherers.rules import RulePattern
 from finance_api.classification.learning import merchant_key
@@ -39,7 +40,7 @@ def apply_proposals(
         session.add(
             ClassificationRule(
                 name=proposal.cluster_key,
-                rule_expression=proposal.suggested_pattern,
+                rule_expression=migrate_rule_expression(proposal.suggested_pattern),
                 category_id=category_id,
                 priority=0,
                 is_active=True,

@@ -8,16 +8,16 @@ from finance_api.ingestion.source import SourceTransaction
 
 
 def _src(**overrides: object) -> SourceTransaction:
-    base: dict[str, object] = dict(
-        transaction_id="abc-123",
-        transaction_date=datetime(2026, 1, 15, 9, 30, 0),
-        amount=Decimal("-42.50"),
-        currency="PLN",
-        account_name="Wspolne",
-        description="BIEDRONKA 1234 WARSZAWA",
-        merchant_name="Biedronka",
-        synced_at=datetime(2026, 1, 16, 2, 0, 0),
-    )
+    base: dict[str, object] = {
+        "transaction_id": "abc-123",
+        "transaction_date": datetime(2026, 1, 15, 9, 30, 0),
+        "amount": Decimal("-42.50"),
+        "currency": "PLN",
+        "account_name": "Wspolne",
+        "description": "BIEDRONKA 1234 WARSZAWA",
+        "merchant_name": "Biedronka",
+        "synced_at": datetime(2026, 1, 16, 2, 0, 0),
+    }
     base.update(overrides)
     return SourceTransaction(**base)  # type: ignore[arg-type]
 

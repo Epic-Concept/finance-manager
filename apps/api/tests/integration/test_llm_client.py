@@ -139,7 +139,9 @@ def test_inference_gatherer_against_live_model(live_client: LiteLLMClient) -> No
     assert evidence == [] or evidence[0].claim.category_ids == (3,)
 
 
-def test_inference_gatherer_against_live_model(live_client: LiteLLMClient) -> None:
+def test_llm_inference_gatherer_against_live_model(
+    live_client: LiteLLMClient,
+) -> None:
     categories = [
         CategoryRef(5, "Groceries"),
         CategoryRef(7, "Transport"),

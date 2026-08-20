@@ -310,7 +310,9 @@ class RefinementSessionRepository:
         if validation_false_positives is not None:
             proposal.validation_false_positives = validation_false_positives
         if sample_false_positives is not None:
-            proposal.validation_false_positives_json = json.dumps(sample_false_positives)
+            proposal.validation_false_positives_json = json.dumps(
+                sample_false_positives
+            )
 
         return proposal
 

@@ -11,8 +11,10 @@ from __future__ import annotations
 
 import re
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
+from finance_api.classification.cel import migrate_rule_expression
+from finance_api.classification.cohorts import CohortDiscovery
 from finance_api.classification.gatherers.llm_inference import CategoryRef
 from finance_api.classification.llm import LLMClient, extract_json
 from finance_api.services.transaction_clustering_service import (
@@ -59,7 +61,7 @@ class ClusterCategoryProposer:
         )
 
     def propose(self, cluster: TransactionCluster) -> ClusterProposal:
-        pattern = f"(?i){re.escape(cluster.cluster_key)}"
+        pattern = migrate_rule_expression(f"(?i){re.escape(cluster.cluster_key)}")
         category_id: int | None = None
         confidence = "low"
         try:
@@ -88,12 +90,31 @@ class ClusterCategoryProposer:
 def build_proposals(
     transactions: Sequence[object],
     proposer: ClusterCategoryProposer,
-    clustering: TransactionClusteringService,
+    clustering: TransactionClusteringService | None = None,
     top_n: int = 100,
 ) -> list[ClusterProposal]:
-    """Cluster transactions and propose categories for the largest N clusters."""
-    clusters = clustering.cluster_transactions(list(transactions))  # type: ignore[arg-type]
-    return [proposer.propose(cluster) for cluster in clusters[:top_n]]
+    """Discover CEL cohorts and propose a category per cohort.
+
+    Hierarchical clustering + template CEL replace first-token regex proposals.
+    The LLM still only chooses a category (one call per cohort).
+    """
+    min_size = 2
+    if clustering is not None:
+        min_size = max(1, int(getattr(clustering, "_min_cluster_size", 2)))
+    discovery = CohortDiscovery(
+        list(transactions), list(transactions), min_size=min_size
+    )
+    out: list[ClusterProposal] = []
+    for cohort in discovery.proposals(top_n=top_n):
+        cluster = TransactionCluster(
+            cluster_key=cohort.cluster_key,
+            cluster_hash=cohort.cohort_id,
+            transactions=[object()] * len(cohort.transaction_ids),  # type: ignore[list-item]
+            sample_descriptions=list(cohort.sample_descriptions),
+        )
+        proposed = proposer.propose(cluster)
+        out.append(replace(proposed, suggested_pattern=cohort.expression))
+    return out
 
 
 @dataclass(frozen=True)
@@ -121,6 +142,14 @@ def cluster_coverage(
     selected = list(clusters) if top_n is None else list(clusters)[:top_n]
     covered = sum(c.size for c in selected)
     return CoverageReport(covered=covered, total=total, cluster_count=len(selected))
+
+
+def proposal_coverage(
+    proposals: Sequence[ClusterProposal], total: int
+) -> CoverageReport:
+    """Share of the residual covered by the current cohort proposals."""
+    covered = sum(p.transaction_count for p in proposals)
+    return CoverageReport(covered=covered, total=total, cluster_count=len(proposals))
 
 
 def resolve_choice(raw: str, proposed_category_id: int | None) -> int | None:

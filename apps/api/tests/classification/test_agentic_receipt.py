@@ -150,7 +150,6 @@ class TestAgenticReceiptGatherer:
                 ):
                     captured["read_body_seen"] = True
             # drive: search, then read, then finish
-            calls = [m for m in msgs if m.get("role") == "assistant"]
             if not any(
                 tc["function"]["name"] == "search_mailbox"
                 for m in msgs

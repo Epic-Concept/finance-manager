@@ -1,3 +1,5 @@
+Blocked on `autonomous-household-ledger`: cohort card, not per-transaction queue. Tasks 1.x (shell/tokens) are still valid; 3–4 must wait.
+
 ## 1. Foundation — shell & design system
 
 - [ ] 1.1 Add deps + tooling: React Router, a data-fetching layer (React Query), and confirm vitest/RTL setup

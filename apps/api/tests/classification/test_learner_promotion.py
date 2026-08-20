@@ -54,6 +54,8 @@ def test_stable_confirmed_merchant_is_promoted(db_session: Session) -> None:
     assert rule.name == "ZABKA"
     assert rule.category_id == 1
     assert rule.is_active is True
+    assert "matches" in rule.rule_expression
+    assert "ZABKA" in rule.rule_expression
 
 
 def test_insufficient_support_is_not_promoted(db_session: Session) -> None:

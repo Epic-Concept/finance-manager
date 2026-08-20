@@ -9,7 +9,7 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from finance_api.classification.evidence import Claim, StrengthTier
+from finance_api.classification.evidence import StrengthTier
 from finance_api.classification.policy import Decision, MerchantClass, Outcome
 from finance_api.db.base import Base, import_models
 from finance_api.db.session import get_db

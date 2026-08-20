@@ -43,7 +43,7 @@ class TestClusterCategoryProposer:
         assert p.proposed_category_id == 9
         assert p.proposed_category_name == "Eating Out"
         assert p.confidence == "high"
-        # a usable regex matching the merchant key, case-insensitive
+        assert "matches" in p.suggested_pattern
         assert "GREGGS" in p.suggested_pattern.upper()
 
     def test_invalid_category_leaves_proposal_unresolved(self) -> None:
@@ -60,6 +60,9 @@ class TestClusterCategoryProposer:
 
 class TestBuildProposals:
     def test_proposes_for_largest_clusters_first(self) -> None:
+        from datetime import date
+        from decimal import Decimal
+
         from finance_api.services.transaction_clustering_service import (
             TransactionClusteringService,
         )
@@ -68,6 +71,10 @@ class TestBuildProposals:
             def __init__(self, id, desc):
                 self.id = id
                 self.description = desc
+                self.amount = Decimal("-10.00")
+                self.account_name = "Current"
+                self.transaction_date = date(2026, 1, 1)
+                self.merchant_name = None
 
         txns = [_Txn(i, "GREGGS shop") for i in range(5)] + [
             _Txn(100 + i, "TESCO store") for i in range(2)
@@ -78,6 +85,8 @@ class TestBuildProposals:
         proposals = build_proposals(
             txns, proposer, TransactionClusteringService(min_cluster_size=1), top_n=10
         )
-        # largest cluster (GREGGS, 5) ranked before TESCO (2)
         assert proposals[0].transaction_count >= proposals[1].transaction_count
-        assert {p.cluster_key for p in proposals} == {"GREGGS", "TESCO"}
+        keys = " ".join(p.cluster_key for p in proposals)
+        assert "GREGGS" in keys
+        assert "TESCO" in keys
+        assert "matches" in proposals[0].suggested_pattern

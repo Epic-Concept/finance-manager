@@ -20,6 +20,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from decimal import Decimal
 
+from finance_api.classification.cel import cel_for_merchant
 from finance_api.classification.evidence import Claim
 from finance_api.classification.gatherers.mailbox import merchant_terms
 
@@ -80,6 +81,7 @@ class ProposedRule:
     merchant_key: str
     category_id: int
     support: int
+    expression: str
 
 
 @dataclass(frozen=True)
@@ -123,7 +125,14 @@ class ShadowLearner:
                 continue  # not enough support
             if not any(o.human_confirmed for o in group):
                 continue  # self-confirmation guard
-            proposals.append(ProposedRule(key, next(iter(categories)), len(group)))
+            proposals.append(
+                ProposedRule(
+                    key,
+                    next(iter(categories)),
+                    len(group),
+                    cel_for_merchant(key),
+                )
+            )
         return proposals
 
     def detect_recurring_splits(
