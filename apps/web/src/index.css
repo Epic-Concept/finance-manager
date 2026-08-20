@@ -8,17 +8,17 @@
   --clay: #9a4b3b;
   color: var(--ink);
   background: var(--paper);
-  font-family: "Hanken Grotesk", system-ui, sans-serif;
+  font-family: 'Hanken Grotesk', system-ui, sans-serif;
   line-height: 1.45;
   font-synthesis: none;
 }
 
 @font-face {
-  font-family: "Newsreader";
+  font-family: 'Newsreader';
   font-style: normal;
   font-weight: 500;
   font-display: swap;
-  src: local("Newsreader");
+  src: local('Newsreader');
 }
 
 * {
@@ -76,14 +76,14 @@ select {
 }
 
 .display {
-  font-family: "Newsreader", "Times New Roman", serif;
+  font-family: 'Newsreader', 'Times New Roman', serif;
   font-size: 1.85rem;
   font-weight: 500;
   letter-spacing: -0.02em;
 }
 
 .mono {
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
   font-variant-numeric: tabular-nums;
 }
 

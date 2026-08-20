@@ -13,13 +13,13 @@ from dataclasses import dataclass
 from sqlalchemy import exists, select
 from sqlalchemy.orm import Session
 
-from finance_api.classification.cold_start import (
-    ColdStartBlocked,
-    cold_start_should_block,
-)
 from finance_api.classification.cohorts import (
     CohortDiscovery,
     pending_review_transactions,
+)
+from finance_api.classification.cold_start import (
+    ColdStartBlocked,
+    cold_start_should_block,
 )
 from finance_api.classification.engine import ClassificationEngine
 from finance_api.classification.gatherer import GatherContext

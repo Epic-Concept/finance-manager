@@ -9,7 +9,10 @@ function Shell() {
         <strong className="display" style={{ fontSize: '1.1rem' }}>
           Quiet Ledger
         </strong>
-        <NavLink to="/review" className={({ isActive }) => (isActive ? 'active' : '')}>
+        <NavLink
+          to="/review"
+          className={({ isActive }) => (isActive ? 'active' : '')}
+        >
           Review
         </NavLink>
         <NavLink
@@ -18,7 +21,10 @@ function Shell() {
         >
           Bootstrap
         </NavLink>
-        <NavLink to="/overview" className={({ isActive }) => (isActive ? 'active' : '')}>
+        <NavLink
+          to="/overview"
+          className={({ isActive }) => (isActive ? 'active' : '')}
+        >
           Overview
         </NavLink>
       </nav>

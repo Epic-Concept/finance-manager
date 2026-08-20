@@ -39,7 +39,9 @@ def main() -> int:
         return 0
     except ColdStartBlocked as exc:
         session.rollback()
-        print(f"classify blocked (offer cohort bootstrap first): {exc}", file=sys.stderr)
+        print(
+            f"classify blocked (offer cohort bootstrap first): {exc}", file=sys.stderr
+        )
         return 2
     except Exception as exc:  # noqa: BLE001 - top-level CLI boundary
         session.rollback()

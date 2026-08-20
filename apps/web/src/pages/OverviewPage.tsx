@@ -27,14 +27,20 @@ export function OverviewPage() {
   return (
     <>
       <h1 className="display">Overview</h1>
-      <StatLine label="Coverage" value={`${Math.round(stats.coverage * 100)}%`} />
+      <StatLine
+        label="Coverage"
+        value={`${Math.round(stats.coverage * 100)}%`}
+      />
       <StatLine
         label="Auto-apply rate"
         value={`${Math.round(stats.auto_apply_rate * 100)}%`}
       />
       <StatLine label="Pending review" value={String(stats.pending_review)} />
       <StatLine label="Cohort depth" value={String(stats.pending_cohorts)} />
-      <h2 className="display" style={{ marginTop: '1.5rem', fontSize: '1.3rem' }}>
+      <h2
+        className="display"
+        style={{ marginTop: '1.5rem', fontSize: '1.3rem' }}
+      >
         Rules
       </h2>
       <LedgerTable

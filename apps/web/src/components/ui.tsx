@@ -16,7 +16,11 @@ export function Button({
   type?: 'button' | 'submit';
 }) {
   return (
-    <button type={type} className={primary ? 'btn primary' : 'btn'} onClick={onClick}>
+    <button
+      type={type}
+      className={primary ? 'btn primary' : 'btn'}
+      onClick={onClick}
+    >
       {children}
     </button>
   );

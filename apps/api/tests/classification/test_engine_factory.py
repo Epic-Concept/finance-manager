@@ -16,19 +16,19 @@ from finance_api.classification.gatherers.web_lookup import WebLookupGatherer
 
 
 def _settings(**overrides: object) -> SimpleNamespace:
-    base: dict[str, object] = dict(
-        litellm_base_url="http://gb10:4000/v1",
-        litellm_api_key="",
-        litellm_model="qwen",
-        litellm_max_tokens=2048,
-        litellm_timeout_seconds=60.0,
-        brave_api_key="",
-        brave_base_url="https://brave",
-        gmail_imap_user="",
-        gmail_imap_password="",
-        gmail_imap_host="imap.gmail.com",
-        gmail_imap_folder="\\All",
-    )
+    base: dict[str, object] = {
+        "litellm_base_url": "http://gb10:4000/v1",
+        "litellm_api_key": "",
+        "litellm_model": "qwen",
+        "litellm_max_tokens": 2048,
+        "litellm_timeout_seconds": 60.0,
+        "brave_api_key": "",
+        "brave_base_url": "https://brave",
+        "gmail_imap_user": "",
+        "gmail_imap_password": "",
+        "gmail_imap_host": "imap.gmail.com",
+        "gmail_imap_folder": "\\All",
+    }
     base.update(overrides)
     return SimpleNamespace(**base)
 

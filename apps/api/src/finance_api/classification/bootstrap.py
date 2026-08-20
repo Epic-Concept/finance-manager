@@ -149,9 +149,7 @@ def proposal_coverage(
 ) -> CoverageReport:
     """Share of the residual covered by the current cohort proposals."""
     covered = sum(p.transaction_count for p in proposals)
-    return CoverageReport(
-        covered=covered, total=total, cluster_count=len(proposals)
-    )
+    return CoverageReport(covered=covered, total=total, cluster_count=len(proposals))
 
 
 def resolve_choice(raw: str, proposed_category_id: int | None) -> int | None:
