@@ -4,7 +4,7 @@ from datetime import date
 from decimal import Decimal
 
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, select, text
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
@@ -22,6 +22,7 @@ from finance_api.db.session import get_db
 from finance_api.main import app
 from finance_api.models.category import Category
 from finance_api.models.classification_decision import ClassificationDecision
+from finance_api.models.classification_rule import ClassificationRule
 from finance_api.models.transaction import Transaction
 
 
@@ -97,6 +98,63 @@ def test_forty_seven_tesco_are_one_cohort() -> None:
         assert len(listed_again["items"]) == 1
     finally:
         app.dependency_overrides.clear()
+        session.close()
+
+
+def test_confirm_cohort_mints_rule_and_resolves() -> None:
+    engine = _engine()
+    SessionLocal = sessionmaker(bind=engine)
+    session: Session = SessionLocal()
+    session.add(Category(id=1, name="Groceries"))
+    for i in range(3):
+        txn = Transaction(
+            transaction_date=date(2026, 1, 1),
+            description=f"TESCO STORES {i}",
+            amount=Decimal("-12.00"),
+            currency="GBP",
+            account_name="Current",
+        )
+        session.add(txn)
+        session.flush()
+        session.add(
+            ClassificationDecision(
+                transaction_id=txn.id,
+                outcome="review",
+                merchant_class="unknown",
+                strength=0,
+                reason="no_evidence",
+                confirmed=False,
+            )
+        )
+    session.commit()
+
+    def override():
+        db = SessionLocal()
+        try:
+            yield db
+        finally:
+            db.close()
+
+    app.dependency_overrides[get_db] = override
+    try:
+        client = TestClient(app)
+        listed = client.get("/api/v1/cohorts").json()
+        assert len(listed["items"]) == 1
+        cohort_id = listed["items"][0]["cohort_id"]
+        confirmed = client.post(
+            f"/api/v1/cohorts/{cohort_id}/resolve",
+            json={"action": "confirm", "category_id": 1},
+        )
+        assert confirmed.status_code == 200
+        assert confirmed.json()["resolved"] == 3
+        assert client.get("/api/v1/cohorts").json()["items"] == []
+    finally:
+        app.dependency_overrides.clear()
+        check = SessionLocal()
+        rules = list(check.scalars(select(ClassificationRule)))
+        assert len(rules) == 1
+        assert "matches" in rules[0].rule_expression
+        check.close()
         session.close()
 
 

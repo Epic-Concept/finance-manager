@@ -44,7 +44,7 @@ class CelEvaluator:
             return None
         try:
             result = program.evaluate(
-                {"txn": celpy.json_to_cel(activation.as_cel_map())}
+                {"txn": celpy.json_to_cel(activation.as_cel_map())}  # type: ignore[attr-defined]
             )
         except Exception as exc:  # noqa: BLE001 - skip invalid, never fatal
             logger.warning("skipping CEL eval '%s': %s", expression, exc)
