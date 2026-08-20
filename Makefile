@@ -1,4 +1,4 @@
-.PHONY: install install-api install-web test test-api test-web lint lint-api lint-web format docker-build docker-build-api docker-build-web run clean help db-up db-down db-migrate db-reset seed-data seed-data-clear
+.PHONY: install install-api install-web install-mobile test test-api test-web test-mobile lint lint-api lint-web lint-mobile format docker-build docker-build-api docker-build-web run clean help db-up db-down db-migrate db-reset seed-data seed-data-clear
 
 # Default target
 help:
@@ -7,18 +7,22 @@ help:
 	@echo "  install          Install all dependencies"
 	@echo "  install-api      Install API dependencies"
 	@echo "  install-web      Install Web dependencies"
+	@echo "  install-mobile   Install Mobile (Expo) dependencies"
 	@echo ""
 	@echo "  test             Run all tests"
 	@echo "  test-api         Run API tests"
 	@echo "  test-web         Run Web tests"
+	@echo "  test-mobile      Run Mobile tests"
 	@echo ""
 	@echo "  lint             Run all linters"
 	@echo "  lint-api         Run API linters"
 	@echo "  lint-web         Run Web linters"
+	@echo "  lint-mobile      Run Mobile linters"
 	@echo ""
 	@echo "  format           Format all code"
 	@echo "  format-api       Format API code"
 	@echo "  format-web       Format Web code"
+	@echo "  format-mobile    Format Mobile code"
 	@echo ""
 	@echo "  db-up            Start database container"
 	@echo "  db-down          Stop database container"
@@ -35,7 +39,7 @@ help:
 	@echo "  clean            Clean build artifacts"
 
 # Install
-install: install-api install-web
+install: install-api install-web install-mobile
 
 install-api:
 	cd apps/api && pip install -e ".[dev]"
@@ -43,8 +47,11 @@ install-api:
 install-web:
 	cd apps/web && npm install
 
+install-mobile:
+	cd apps/mobile && npm install
+
 # Test
-test: test-api test-web
+test: test-api test-web test-mobile
 
 test-api:
 	cd apps/api && pytest
@@ -52,8 +59,11 @@ test-api:
 test-web:
 	cd apps/web && npm test
 
+test-mobile:
+	cd apps/mobile && npm test
+
 # Lint
-lint: lint-api lint-web
+lint: lint-api lint-web lint-mobile
 
 lint-api:
 	cd apps/api && ruff check src tests && black --check src tests && mypy src
@@ -61,14 +71,20 @@ lint-api:
 lint-web:
 	cd apps/web && npm run lint
 
+lint-mobile:
+	cd apps/mobile && npm run lint && npm run typecheck
+
 # Format
-format: format-api format-web
+format: format-api format-web format-mobile
 
 format-api:
 	cd apps/api && ruff check --fix src tests && black src tests
 
 format-web:
 	cd apps/web && npm run format
+
+format-mobile:
+	cd apps/mobile && npm run format
 
 # Database
 db-up:

@@ -1,0 +1,35 @@
+{
+  "cli": {
+    "version": ">= 16.0.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "ios": {
+        "credentialsSource": "remote"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "ios": {
+        "simulator": false,
+        "credentialsSource": "remote"
+      }
+    },
+    "production": {
+      "autoIncrement": true,
+      "ios": {
+        "credentialsSource": "remote"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "ascAppId": "replace-with-app-store-connect-app-id"
+      }
+    }
+  }
+}

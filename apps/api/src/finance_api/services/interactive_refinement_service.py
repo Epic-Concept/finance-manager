@@ -3,8 +3,10 @@
 import json
 import re
 from dataclasses import dataclass
+from typing import cast
 
 from anthropic import Anthropic
+from anthropic.types import MessageParam
 
 from finance_api.models.category import Category
 from finance_api.models.transaction import Transaction
@@ -227,19 +229,22 @@ class InteractiveRefinementService:
             InteractiveRefinementError: If LLM call fails.
         """
         system_prompt = self._build_system_prompt(cluster, categories)
+        messages: list[MessageParam] = [
+            {
+                "role": "user",
+                "content": "Please analyze this cluster and propose classification rules.",
+            }
+        ]
 
         try:
+            # Anthropic SDK 1.x dropped `temperature` from typed create(); pass via
+            # extra_body so sampling still works without breaking mypy.
             response = self._client.messages.create(
                 model=self._model,
                 max_tokens=2048,
-                temperature=self._temperature,
                 system=system_prompt,
-                messages=[
-                    {
-                        "role": "user",
-                        "content": "Please analyze this cluster and propose classification rules.",
-                    }
-                ],
+                messages=messages,
+                extra_body={"temperature": self._temperature},
             )
             first_block = response.content[0]
             response_text = first_block.text if hasattr(first_block, "text") else ""
@@ -272,9 +277,14 @@ class InteractiveRefinementService:
         system_prompt = self._build_system_prompt(cluster, categories)
 
         # Build messages list from history
-        messages = []
+        messages: list[MessageParam] = []
         for msg in conversation_history:
-            messages.append({"role": msg["role"], "content": msg["content"]})
+            messages.append(
+                cast(
+                    MessageParam,
+                    {"role": msg["role"], "content": msg["content"]},
+                )
+            )
 
         # Add new user message
         messages.append({"role": "user", "content": user_message})
@@ -283,9 +293,9 @@ class InteractiveRefinementService:
             response = self._client.messages.create(
                 model=self._model,
                 max_tokens=2048,
-                temperature=self._temperature,
                 system=system_prompt,
-                messages=messages,  # type: ignore[arg-type]
+                messages=messages,
+                extra_body={"temperature": self._temperature},
             )
             first_block = response.content[0]
             response_text = first_block.text if hasattr(first_block, "text") else ""

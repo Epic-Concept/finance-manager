@@ -8,7 +8,8 @@ A personal finance management application built with FastAPI backend and React f
 finance_manager/
 ├── apps/
 │   ├── api/          # FastAPI backend
-│   └── web/          # React/TypeScript frontend
+│   ├── web/          # React/TypeScript frontend
+│   └── mobile/       # Expo / React Native (iOS-first)
 ├── infra/            # Terraform infrastructure (Azure)
 ├── docs/             # Documentation
 │   ├── architecture/ # Architecture Decision Records
@@ -44,6 +45,16 @@ cd apps/web
 npm install
 npm run dev
 ```
+
+### Mobile (Expo / iOS)
+
+```bash
+cd apps/mobile
+npm install
+npm start
+```
+
+See [apps/mobile/README.md](apps/mobile/README.md) for Expo Go and TestFlight setup.
 
 ### Using Make
 

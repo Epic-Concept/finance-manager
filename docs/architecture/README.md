@@ -8,6 +8,7 @@ This directory contains Architecture Decision Records (ADRs) documenting signifi
 |-----|-------|--------|
 | [ADR-001](./adr-001-monorepo-structure.md) | Monorepo Structure | Accepted |
 | [ADR-002](./adr-002-autonomous-household-ledger.md) | Autonomous Household Ledger | Proposed |
+| [ADR-003](./adr-003-expo-mobile-client.md) | Expo Mobile Client | Accepted |
 
 ## Template
 

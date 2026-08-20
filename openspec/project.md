@@ -6,6 +6,7 @@ Local-first, household-first personal finance management application. Its core i
 ## Tech Stack
 - **Backend:** Python 3.11+ with FastAPI
 - **Frontend:** React with TypeScript (Vite)
+- **Mobile:** Expo / React Native (iOS-first Quiet Ledger client)
 - **Database:** PostgreSQL, hosted on `gb10.local`; local-first, not cloud-hosted
 - **AI / LLM:** Local on-prem model on `gb10.local` for agentic classification and receipt extraction; cloud LLM (Anthropic) used only where explicitly chosen for a specific task
 - **Hosting:** Self-hosted on `gb10.local` — the application, PostgreSQL, and the LLM are co-located on one machine, so financial data and mailbox content never leave the host
