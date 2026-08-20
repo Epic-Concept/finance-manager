@@ -13,6 +13,7 @@
 
 ### Architecture
 - [ADR-001: Monorepo Structure](./architecture/adr-001-monorepo-structure.md)
+- [ADR-002: Autonomous Household Ledger](./architecture/adr-002-autonomous-household-ledger.md) (proposed)
 
 ### API
 - [API Overview](./api/overview.md)
