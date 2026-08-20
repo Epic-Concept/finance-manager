@@ -1,3 +1,4 @@
+import 'react-native-gesture-handler';
 import {
   IBMPlexMono_400Regular,
   useFonts as useMonoFonts,
