@@ -69,20 +69,43 @@ docker exec finance-manager-api python -m finance_api.scripts.classify_transacti
 
 ## Nightly pipeline (scheduled)
 
-`~/finance-manager/nightly.sh` runs `sync -> classify -> learn`, scheduled at
-05:30 via cron, logging to `~/finance-manager/nightly.log`:
+`~/finance-manager/nightly.sh` runs `sync -> classify -> learn`. Classify uses
+cheap gatherers (CEL rules + history). If there are no rules and a large
+unclassified residual, classify refuses a per-row review firehose until cohort
+bootstrap has been offered. No extra daily ping is sent.
 
 ```
 30 5 * * * /home/mfalkiewicz/finance-manager/nightly.sh >> /home/mfalkiewicz/finance-manager/nightly.log 2>&1
 ```
 
+After CEL cutover, rebuild books once:
+
+```bash
+docker exec finance-manager-api python -m finance_api.scripts.reprocess_postings
+```
+
 Manual run: `~/finance-manager/nightly.sh`. Tail logs: `tail -f ~/finance-manager/nightly.log`.
 
-## Review loop
+## Weekly Quiet Ledger ritual
+
+Default interrupt budget is zero. Open the cockpit (`http://gb10:8089/review`)
+once a week if the overview shows a non-zero cohort depth. One card is a
+**group** (CEL predicate + samples), not a single charge.
+
+- `GET /api/v1/cohorts` — grouped residual
+- `POST /api/v1/cohorts/{id}/resolve` `{"action":"confirm","category_id":N}` or `{"action":"skip"}`
+- Skip is safe: the cohort stays, classify keeps running, no nag that day
+- Interrupt-now is only for contested or large-unknown (see `money_at_risk_minor`)
+
+Keyboard on the focus card: **c** confirm, **e** focus category (change), **s** skip.
+Edit the CEL on the card to split/specialize before confirming.
+
+## Review loop (singletons)
+
+Leftovers that will not cluster still use the per-transaction API:
 
 - List pending: `GET http://gb10:8088/api/v1/reviews`
 - Resolve one: `POST http://gb10:8088/api/v1/reviews/{decision_id}/resolve {"category_id": N}`
-  (confirm / reclassify / mark internal-transfer — pass the chosen category id).
 
 Resolving marks the decision `confirmed`; the scheduled learner promotes stable,
 confirmed merchants to rules so they auto-apply next time.

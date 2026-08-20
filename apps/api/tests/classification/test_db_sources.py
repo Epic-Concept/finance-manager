@@ -10,6 +10,7 @@ from decimal import Decimal
 from sqlalchemy.orm import Session
 
 from finance_api.classification.bootstrap import ClusterProposal
+from finance_api.classification.cel import migrate_rule_expression
 from finance_api.classification.db_sources import DbRuleSource, apply_proposals
 from finance_api.classification.gatherer import GatherContext
 from finance_api.classification.gatherers.rules import RuleGatherer
@@ -44,7 +45,7 @@ class TestApplyProposals:
         assert count == 1
         rules = DbRuleSource(db_session).active_rules()
         assert len(rules) == 1
-        assert rules[0].pattern == "(?i)ZABKA"
+        assert rules[0].pattern == migrate_rule_expression("(?i)ZABKA")
         assert rules[0].category_id == groceries.id
         assert rules[0].name == "ZABKA"
 

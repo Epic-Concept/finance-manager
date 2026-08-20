@@ -1,53 +1,61 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import App from './App';
+import { TierMark } from './components/ui';
 
-describe('App', () => {
+describe('Quiet Ledger shell', () => {
   beforeEach(() => {
     vi.resetAllMocks();
-  });
-
-  it('renders the header', () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve({ status: 'healthy', version: '0.1.0' }),
+        json: () => Promise.resolve({ items: [], singletons: [] }),
       })
     );
-
-    render(<App />);
-    expect(screen.getByText('Finance Manager')).toBeInTheDocument();
   });
 
-  it('displays API status when healthy', async () => {
+  it('renders Quiet Ledger navigation', () => {
+    render(
+      <MemoryRouter initialEntries={['/review']}>
+        <App />
+      </MemoryRouter>
+    );
+    expect(screen.getByText('Quiet Ledger')).toBeInTheDocument();
+    expect(screen.getByText('Review')).toBeInTheDocument();
+    expect(screen.getByText('Bootstrap')).toBeInTheDocument();
+  });
+
+  it('shows empty queue state', async () => {
+    render(
+      <MemoryRouter initialEntries={['/review']}>
+        <App />
+      </MemoryRouter>
+    );
+    expect(await screen.findByText(/Queue is clear/)).toBeInTheDocument();
+  });
+
+  it('shows singleton residual when nothing clustered', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve({ status: 'healthy', version: '0.1.0' }),
+        json: () => Promise.resolve({ items: [], singletons: [11, 12] }),
       })
     );
-
-    render(<App />);
-
-    await waitFor(() => {
-      expect(screen.getByText('healthy')).toBeInTheDocument();
-    });
+    render(
+      <MemoryRouter initialEntries={['/review']}>
+        <App />
+      </MemoryRouter>
+    );
+    expect(await screen.findByText(/singleton residual/i)).toBeInTheDocument();
   });
+});
 
-  it('displays error when API is unavailable', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue({
-        ok: false,
-      })
-    );
-
-    render(<App />);
-
-    await waitFor(() => {
-      expect(screen.getByText('Unable to connect to API')).toBeInTheDocument();
-    });
+describe('TierMark', () => {
+  it('renders proof as four dots', () => {
+    render(<TierMark strength={3} />);
+    expect(screen.getByTestId('tier-mark').textContent).toMatch(/PROOF/);
   });
 });

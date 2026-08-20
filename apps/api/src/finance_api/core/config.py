@@ -50,5 +50,8 @@ class Settings(BaseSettings):
     azure_sql_schema: str = "finance"
     azure_sql_table: str = "bank_transactions"
 
+    # ADHD interrupt budget: absolute amount in minor units (× 10^4). £200 default.
+    money_at_risk_minor: int = 2_000_000
+
 
 settings = Settings()

@@ -8,11 +8,11 @@ from sqlalchemy.orm import Session
 
 from finance_api.classification.engine import ClassificationEngine
 from finance_api.classification.factory import build_engine, build_gatherers
+from finance_api.classification.gatherers.agentic_receipt import AgenticReceiptGatherer
 from finance_api.classification.gatherers.history import HistoryGatherer
 from finance_api.classification.gatherers.llm_inference import LLMInferenceGatherer
 from finance_api.classification.gatherers.rules import RuleGatherer
 from finance_api.classification.gatherers.web_lookup import WebLookupGatherer
-from finance_api.classification.gatherers.agentic_receipt import AgenticReceiptGatherer
 
 
 def _settings(**overrides: object) -> SimpleNamespace:

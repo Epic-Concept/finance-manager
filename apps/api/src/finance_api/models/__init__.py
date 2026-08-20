@@ -10,6 +10,7 @@ from finance_api.models.classification_decision import (
 )
 from finance_api.models.classification_rule import ClassificationRule
 from finance_api.models.email_account import EmailAccount
+from finance_api.models.ledger import JournalEntry, Pocket, Posting
 from finance_api.models.online_purchase import OnlinePurchase
 from finance_api.models.refinement_session import RefinementSession
 from finance_api.models.rule_proposal import RuleProposal
@@ -29,7 +30,10 @@ __all__ = [
     "ClassificationRule",
     "DecisionEvidence",
     "EmailAccount",
+    "JournalEntry",
     "OnlinePurchase",
+    "Pocket",
+    "Posting",
     "RefinementSession",
     "RuleProposal",
     "SessionMessage",

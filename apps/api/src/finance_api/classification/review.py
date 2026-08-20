@@ -9,18 +9,19 @@ the classification hot path.
 
 from __future__ import annotations
 
-import re
 from dataclasses import dataclass
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from finance_api.classification.cel import migrate_rule_expression
 from finance_api.classification.learning import (
     LearningObservation,
     ShadowLearner,
     merchant_key,
 )
 from finance_api.classification.policy import Outcome
+from finance_api.ledger.poster import post_decision
 from finance_api.models.classification_decision import (
     CategorizationSplit,
     ClassificationDecision,
@@ -104,6 +105,7 @@ class ReviewService:
         decision.outcome = Outcome.AUTO_APPLY.value
         decision.confirmed = True
         self._session.flush()
+        post_decision(self._session, txn, decision)
         return decision
 
     def confirm(self, decision_id: int) -> ClassificationDecision:
@@ -157,7 +159,7 @@ def run_learner_promotion(
         session.add(
             ClassificationRule(
                 name=proposal.merchant_key,
-                rule_expression=re.escape(proposal.merchant_key),
+                rule_expression=migrate_rule_expression(proposal.expression),
                 category_id=proposal.category_id,
                 priority=0,
                 is_active=True,

@@ -76,3 +76,48 @@ class TestRuleGatherer:
         evidence = gatherer.gather(_context("TFL TRAVEL"))
         assert len(evidence) == 1
         assert evidence[0].claim.category_ids == (7,)
+
+    def test_amount_constraint(self) -> None:
+        gatherer = RuleGatherer(
+            _FakeRuleSource([RulePattern("txn.amount_minor == 28000", 9, "exact-fare")])
+        )
+        assert gatherer.gather(_context("ANY"))[0].claim.category_ids == (9,)
+        miss = GatherContext(
+            transaction_id=1,
+            description="ANY",
+            amount=Decimal("3.00"),
+            currency="GBP",
+            transaction_date=date(2026, 6, 1),
+        )
+        assert gatherer.gather(miss) == []
+
+    def test_account_constraint(self) -> None:
+        gatherer = RuleGatherer(
+            _FakeRuleSource(
+                [
+                    RulePattern(
+                        'txn.account == "Joint" && txn.description.matches("(?i)mortgage")',
+                        2,
+                        "mortgage",
+                    )
+                ]
+            )
+        )
+        hit = GatherContext(
+            transaction_id=1,
+            description="MORTGAGE PAYMENT",
+            amount=Decimal("-800.00"),
+            currency="GBP",
+            transaction_date=date(2026, 6, 1),
+            account_name="Joint",
+        )
+        assert gatherer.gather(hit)[0].claim.category_ids == (2,)
+        other = GatherContext(
+            transaction_id=1,
+            description="MORTGAGE PAYMENT",
+            amount=Decimal("-800.00"),
+            currency="GBP",
+            transaction_date=date(2026, 6, 1),
+            account_name="Personal",
+        )
+        assert gatherer.gather(other) == []

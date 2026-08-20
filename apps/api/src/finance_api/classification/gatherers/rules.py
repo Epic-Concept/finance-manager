@@ -1,18 +1,20 @@
-"""The rule gatherer: deterministic description-matching fast-path.
+"""The rule gatherer: deterministic CEL fast-path.
 
-A rule is a regex over the transaction description mapped to a category. A
-matched approved rule is the cheapest, highest-trust evidence (non-itemized
-``PROOF``). Rules are evaluated in priority order; the first match wins, so rule
-precedence is deterministic. Invalid patterns are skipped rather than fatal.
+A rule is a CEL boolean over a typed transaction activation, mapped to a
+category. A matched approved rule is the cheapest, highest-trust evidence
+(non-itemized ``PROOF``). Rules are evaluated in priority order; the first
+true result wins. Invalid expressions are skipped rather than fatal.
+
+Legacy regex / ``description =~`` strings are migrated to CEL at evaluation
+time so stored rules keep working through the cutover.
 """
 
 from __future__ import annotations
 
-import logging
-import re
 from dataclasses import dataclass
 from typing import Protocol
 
+from finance_api.classification.cel import CelEvaluator, activation_from_context
 from finance_api.classification.evidence import (
     Claim,
     Evidence,
@@ -21,12 +23,10 @@ from finance_api.classification.evidence import (
 )
 from finance_api.classification.gatherer import GatherContext, Gatherer
 
-logger = logging.getLogger(__name__)
-
 
 @dataclass(frozen=True)
 class RulePattern:
-    """A description-matching rule: a regex mapped to a category."""
+    """A CEL (or legacy regex) expression mapped to a category."""
 
     pattern: str
     category_id: int
@@ -40,20 +40,21 @@ class RuleSource(Protocol):
 
 
 class RuleGatherer(Gatherer):
-    """Emits PROOF evidence for the highest-priority rule matching the description."""
+    """Emits PROOF evidence for the highest-priority matching CEL rule."""
 
     produced_types = frozenset({EvidenceType.RULE})
 
-    def __init__(self, source: RuleSource) -> None:
+    def __init__(
+        self, source: RuleSource, evaluator: CelEvaluator | None = None
+    ) -> None:
         self._source = source
+        self._evaluator = evaluator or CelEvaluator()
 
     def gather(self, context: GatherContext) -> list[Evidence]:
-        description = context.description or ""
+        activation = activation_from_context(context)
         for rule in self._source.active_rules():
-            try:
-                matched = re.search(rule.pattern, description) is not None
-            except re.error as exc:
-                logger.warning("skipping invalid rule '%s': %s", rule.name, exc)
+            matched = self._evaluator.matches(rule.pattern, activation)
+            if matched is None:
                 continue
             if matched:
                 return [

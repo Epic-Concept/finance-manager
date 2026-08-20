@@ -35,6 +35,8 @@ dependencies = [
     "anthropic>=0.40.0",
     # Ingestion: read the upstream Azure SQL transactions source (ODBC Driver 18)
     "pyodbc>=5.1.0",
+    # CEL rule language (celpy import; Cloud Custodian implementation)
+    "cel-python>=0.5.0",
 ]
 
 [project.optional-dependencies]
