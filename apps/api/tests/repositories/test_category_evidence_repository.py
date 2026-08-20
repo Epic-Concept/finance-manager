@@ -144,13 +144,13 @@ class TestCategoryEvidenceRepositoryCreate:
             category_id=test_category.id,
             evidence_type="ai_inferred",
             confidence_score=Decimal("0.95"),
-            model_used="claude-sonnet-4-5-20250514",
+            model_used="gpt-5.6-luna",
             raw_extraction='{"items": [{"name": "Python Book"}]}',
         )
         db_session.flush()
 
         assert evidence.confidence_score == Decimal("0.95")
-        assert evidence.model_used == "claude-sonnet-4-5-20250514"
+        assert evidence.model_used == "gpt-5.6-luna"
         assert evidence.raw_extraction is not None
 
 

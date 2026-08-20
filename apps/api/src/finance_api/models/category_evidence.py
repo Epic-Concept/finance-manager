@@ -57,7 +57,7 @@ class CategoryEvidence(Base):
     )  # 0.0000 to 1.0000
     model_used: Mapped[str | None] = mapped_column(
         String(100), nullable=True
-    )  # e.g., 'claude-sonnet-4-5-20250514'
+    )  # e.g., 'gpt-5.6-luna'
     raw_extraction: Mapped[str | None] = mapped_column(
         Text, nullable=True
     )  # Full LLM JSON output for debugging
