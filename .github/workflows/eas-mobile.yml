@@ -1,5 +1,11 @@
 name: Mobile EAS
 
+# Paused until Expo/Apple credentials are configured on a PC.
+# Re-enable: set EAS_MOBILE_ENABLED to "true" below, ensure GitHub secret
+# EXPO_TOKEN exists, then run `eas credentials -p ios` once locally.
+env:
+  EAS_MOBILE_ENABLED: "false"
+
 on:
   workflow_dispatch:
     inputs:
@@ -25,19 +31,41 @@ on:
         required: true
         default: false
         type: boolean
-  push:
-    branches: [main]
-    paths:
-      - "apps/mobile/**"
-      - ".github/workflows/eas-mobile.yml"
+  # Auto builds on main stay off while inert. Uncomment after enabling EAS_MOBILE_ENABLED.
+  # push:
+  #   branches: [main]
+  #   paths:
+  #     - "apps/mobile/**"
+  #     - ".github/workflows/eas-mobile.yml"
 
 concurrency:
   group: eas-mobile-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
+  gate:
+    name: EAS gate
+    runs-on: ubuntu-latest
+    outputs:
+      enabled: ${{ steps.check.outputs.enabled }}
+    steps:
+      - name: Check whether EAS mobile builds are enabled
+        id: check
+        run: |
+          if [ "${{ env.EAS_MOBILE_ENABLED }}" = "true" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+            echo "EAS mobile builds are enabled."
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "EAS mobile builds are inert (EAS_MOBILE_ENABLED=false)."
+            echo "When you have a PC: add GitHub secret EXPO_TOKEN, run eas credentials -p ios,"
+            echo "set EAS_MOBILE_ENABLED to true in this workflow, and uncomment the push trigger."
+          fi
+
   eas-build:
     name: EAS Build
+    needs: gate
+    if: needs.gate.outputs.enabled == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -104,7 +132,6 @@ jobs:
             --json > /tmp/eas-build.json
           echo "Build requested:"
           cat /tmp/eas-build.json
-          # eas build --json may return an object or an array depending on platform count
           BUILD_IDS=$(node -e '
             const fs = require("fs");
             const raw = JSON.parse(fs.readFileSync("/tmp/eas-build.json", "utf8"));

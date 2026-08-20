@@ -57,16 +57,18 @@ For TestFlight submit, set `submit.production.ios.ascAppId` in `eas.json` to you
 
 Workflow: [`.github/workflows/eas-mobile.yml`](../../.github/workflows/eas-mobile.yml)
 
-- **Push to `main`** (paths under `apps/mobile/**`) → iOS **preview** build on EAS (`--no-wait`)
-- **Actions → Mobile EAS → Run workflow** → choose profile / platform / optional store submit
+**Status: inert** until you flip `EAS_MOBILE_ENABLED` to `"true"` in that workflow (after secrets + `eas credentials`). While inert:
 
-Add the repo secret:
+- No automatic builds on `main`
+- Manual “Run workflow” only runs a green gate job and skips the real EAS build
+- Mobile **lint/unit** CI in `ci.yml` still runs (no Expo keys needed)
 
-1. GitHub → Settings → Secrets and variables → Actions → New repository secret
-2. Name: `EXPO_TOKEN`
-3. Value: Expo personal access token
+When ready on a PC:
 
-Until `eas init` has replaced `replace-with-eas-project-id` in `app.json`, the workflow fails fast with a clear error.
+1. Add GitHub secret `EXPO_TOKEN`
+2. Run `eas credentials -p ios` (remote)
+3. Set `EAS_MOBILE_ENABLED: "true"` and uncomment the `push:` trigger in `eas-mobile.yml`
+4. Actions → Mobile EAS → Run workflow (or merge to `main`)
 
 ### Manual builds (same as CI)
 
