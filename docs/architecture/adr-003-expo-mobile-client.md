@@ -11,7 +11,7 @@ Add an Expo / React Native app under `apps/mobile` that:
 
 1. Reuses the existing `/api/v1/cohorts`, `/api/v1/stats`, and `/api/v1/rules` endpoints
 2. Ships Review, Overview, and Settings tabs as the first vertical slice
-3. Uses EAS Build + TestFlight for iOS distribution
+3. Uses EAS Build + TestFlight for iOS distribution (GitHub Actions workflow `eas-mobile.yml`; Apple signing stays in EAS remote credentials, GitHub only needs `EXPO_TOKEN`)
 4. Keeps the web app as the desktop client; mobile is a peer client, not a rewrite of the API
 
 ## Consequences

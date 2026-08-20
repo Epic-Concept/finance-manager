@@ -1,0 +1,131 @@
+name: Mobile EAS
+
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: EAS build profile
+        required: true
+        default: preview
+        type: choice
+        options:
+          - preview
+          - production
+      platform:
+        description: Target platform
+        required: true
+        default: ios
+        type: choice
+        options:
+          - ios
+          - android
+          - all
+      submit:
+        description: Submit to TestFlight / Play after a successful production build
+        required: true
+        default: false
+        type: boolean
+  push:
+    branches: [main]
+    paths:
+      - "apps/mobile/**"
+      - ".github/workflows/eas-mobile.yml"
+
+concurrency:
+  group: eas-mobile-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  eas-build:
+    name: EAS Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/mobile
+    steps:
+      - name: Check EXPO_TOKEN secret
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          if [ -z "$EXPO_TOKEN" ]; then
+            echo "::error::Add repository secret EXPO_TOKEN (expo.dev → Access Tokens)."
+            echo "Apple Developer credentials stay in EAS remote credentials — do not put them in GitHub."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: apps/mobile/package-lock.json
+
+      - name: Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          packager: npm
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify EAS project id
+        run: |
+          PROJECT_ID=$(node -e "const a=require('./app.json'); console.log(a.expo?.extra?.eas?.projectId||'')")
+          if [ -z "$PROJECT_ID" ] || [ "$PROJECT_ID" = "replace-with-eas-project-id" ]; then
+            echo "::error::Run 'eas init' in apps/mobile once, commit the real expo.extra.eas.projectId, then re-run."
+            exit 1
+          fi
+
+      - name: Resolve build inputs
+        id: inputs
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "profile=${{ inputs.profile }}" >> "$GITHUB_OUTPUT"
+            echo "platform=${{ inputs.platform }}" >> "$GITHUB_OUTPUT"
+            echo "submit=${{ inputs.submit }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "profile=preview" >> "$GITHUB_OUTPUT"
+            echo "platform=ios" >> "$GITHUB_OUTPUT"
+            echo "submit=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build on EAS
+        id: build
+        run: |
+          eas build \
+            --platform "${{ steps.inputs.outputs.platform }}" \
+            --profile "${{ steps.inputs.outputs.profile }}" \
+            --non-interactive \
+            --no-wait \
+            --json > /tmp/eas-build.json
+          echo "Build requested:"
+          cat /tmp/eas-build.json
+          # eas build --json may return an object or an array depending on platform count
+          BUILD_IDS=$(node -e '
+            const fs = require("fs");
+            const raw = JSON.parse(fs.readFileSync("/tmp/eas-build.json", "utf8"));
+            const items = Array.isArray(raw) ? raw : [raw];
+            console.log(items.map((b) => b.id).filter(Boolean).join(","));
+          ')
+          echo "build_ids=$BUILD_IDS" >> "$GITHUB_OUTPUT"
+
+      - name: Submit to stores
+        if: steps.inputs.outputs.submit == 'true' && steps.inputs.outputs.profile == 'production'
+        env:
+          # Optional: only needed if EAS must re-create iOS credentials in CI.
+          # Prefer configuring Apple creds once via `eas credentials` (remote).
+          EXPO_ASC_API_KEY_PATH: ${{ secrets.EXPO_ASC_API_KEY_PATH }}
+          EXPO_ASC_KEY_ID: ${{ secrets.EXPO_ASC_KEY_ID }}
+          EXPO_ASC_ISSUER_ID: ${{ secrets.EXPO_ASC_ISSUER_ID }}
+          EXPO_APPLE_TEAM_ID: ${{ secrets.EXPO_APPLE_TEAM_ID }}
+          EXPO_APPLE_TEAM_TYPE: ${{ secrets.EXPO_APPLE_TEAM_TYPE }}
+        run: |
+          eas submit \
+            --platform "${{ steps.inputs.outputs.platform }}" \
+            --profile production \
+            --latest \
+            --non-interactive
