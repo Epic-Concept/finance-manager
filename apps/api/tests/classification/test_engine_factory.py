@@ -11,6 +11,7 @@ from finance_api.classification.factory import build_engine, build_gatherers
 from finance_api.classification.gatherers.agentic_receipt import AgenticReceiptGatherer
 from finance_api.classification.gatherers.history import HistoryGatherer
 from finance_api.classification.gatherers.llm_inference import LLMInferenceGatherer
+from finance_api.classification.gatherers.receipt import ReceiptGatherer
 from finance_api.classification.gatherers.rules import RuleGatherer
 from finance_api.classification.gatherers.web_lookup import WebLookupGatherer
 
@@ -55,7 +56,7 @@ def test_brave_plus_llm_adds_web_lookup(db_session: Session) -> None:
     assert WebLookupGatherer in types
 
 
-def test_gmail_plus_llm_adds_agentic_receipt(db_session: Session) -> None:
+def test_gmail_plus_llm_adds_receipt_gatherers(db_session: Session) -> None:
     types = _types(
         build_gatherers(
             db_session,
@@ -64,6 +65,7 @@ def test_gmail_plus_llm_adds_agentic_receipt(db_session: Session) -> None:
             ),
         )
     )
+    assert ReceiptGatherer in types
     assert AgenticReceiptGatherer in types
 
 

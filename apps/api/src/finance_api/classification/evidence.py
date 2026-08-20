@@ -89,3 +89,6 @@ class Evidence:
     source: str
     strength: StrengthTier
     itemized: bool
+    #: When True (typically from a rule with ``requires_disambiguation``), the
+    #: policy must not auto-apply until receipt evidence is also present.
+    requires_receipt: bool = False

@@ -115,6 +115,31 @@ class ImapMailboxClient:
         self._password = password
         self._folder = folder
         self._max_results = max_results
+        self._conn: imaplib.IMAP4_SSL | None = None
+
+    def connect(self) -> None:
+        """Open and select the mailbox (idempotent within a session)."""
+        if self._conn is not None:
+            return
+        conn = imaplib.IMAP4_SSL(self._host, self._port)
+        conn.login(self._username, self._password)
+        folder = self._folder
+        if folder.startswith("\\"):
+            _, boxes = conn.list()
+            folder = find_special_folder(boxes or [], folder) or "INBOX"
+        conn.select(quote_mailbox(folder), readonly=True)
+        self._conn = conn
+
+    def disconnect(self) -> None:
+        """Close an open session connection."""
+        if self._conn is None:
+            return
+        try:
+            self._conn.logout()
+        except OSError:
+            pass
+        finally:
+            self._conn = None
 
     def _parse_message(self, raw: bytes) -> RawEmail:
         message = email.message_from_bytes(raw)
@@ -135,27 +160,25 @@ class ImapMailboxClient:
         )
 
     def search(self, terms: list[str], since: date, until: date) -> list[RawEmail]:
-        criteria = build_search_criteria(terms, since, until)
-        conn = imaplib.IMAP4_SSL(self._host, self._port)
+        owned_session = self._conn is None
         try:
-            conn.login(self._username, self._password)
-            folder = self._folder
-            # A "\Flag" folder is resolved to the actual (possibly localized)
-            # mailbox name via its IMAP special-use flag.
-            if folder.startswith("\\"):
-                _, boxes = conn.list()
-                folder = find_special_folder(boxes or [], folder) or "INBOX"
-            conn.select(quote_mailbox(folder), readonly=True)
-            _, data = conn.search(None, *criteria)
-            message_ids = data[0].split() if data and data[0] else []
-            results: list[RawEmail] = []
-            for mid in message_ids[-self._max_results :]:
-                _, fetched = conn.fetch(mid, "(RFC822)")
-                if fetched and isinstance(fetched[0], tuple):
-                    results.append(self._parse_message(fetched[0][1]))
-            return results
+            if owned_session:
+                self.connect()
+            return self._search_connected(terms, since, until)
         finally:
-            try:
-                conn.logout()
-            except OSError:
-                pass
+            if owned_session:
+                self.disconnect()
+
+    def _search_connected(
+        self, terms: list[str], since: date, until: date
+    ) -> list[RawEmail]:
+        assert self._conn is not None
+        criteria = build_search_criteria(terms, since, until)
+        _, data = self._conn.search(None, *criteria)
+        message_ids = data[0].split() if data and data[0] else []
+        results: list[RawEmail] = []
+        for mid in message_ids[-self._max_results :]:
+            _, fetched = self._conn.fetch(mid, "(RFC822)")
+            if fetched and isinstance(fetched[0], tuple):
+                results.append(self._parse_message(fetched[0][1]))
+        return results

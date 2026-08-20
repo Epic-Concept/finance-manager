@@ -19,7 +19,8 @@ from finance_api.classification.gatherers.llm_inference import (
     CategoryRef,
     LLMInferenceGatherer,
 )
-from finance_api.classification.gatherers.receipt import EmailCandidate, ReceiptGatherer
+from finance_api.classification.gatherers.mailbox import EmailCandidate
+from finance_api.classification.gatherers.receipt import ReceiptGatherer
 from finance_api.classification.gatherers.rules import RuleGatherer, RulePattern
 from finance_api.classification.gatherers.web_lookup import WebLookupGatherer
 from finance_api.classification.policy import EvidencePolicy, MerchantClass, Outcome

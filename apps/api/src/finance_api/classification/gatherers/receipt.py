@@ -11,7 +11,6 @@ ambiguous: strength is capped (never PROOF) rather than guessing which person pa
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass
 from decimal import Decimal
 from typing import Protocol
 
@@ -23,6 +22,8 @@ from finance_api.classification.evidence import (
     StrengthTier,
 )
 from finance_api.classification.gatherer import GatherContext, Gatherer
+from finance_api.classification.gatherers.mailbox import EmailCandidate
+from finance_api.classification.gatherers.mailbox_session import imap_session
 from finance_api.classification.gatherers.llm_inference import CategoryRef
 from finance_api.classification.receipt import (
     ReceiptExtractionError,
@@ -31,15 +32,6 @@ from finance_api.classification.receipt import (
 )
 
 logger = logging.getLogger(__name__)
-
-
-@dataclass(frozen=True)
-class EmailCandidate:
-    """A candidate receipt email found for a transaction."""
-
-    text: str
-    mailbox: str
-    message_id: str
 
 
 class MailboxSource(Protocol):
@@ -68,6 +60,13 @@ class ReceiptGatherer(Gatherer):
         self._moderate = moderate
 
     def gather(self, context: GatherContext) -> list[Evidence]:
+        clients = getattr(self._mailbox, "clients", None)
+        if clients:
+            with imap_session(clients):
+                return self._gather(context)
+        return self._gather(context)
+
+    def _gather(self, context: GatherContext) -> list[Evidence]:
         candidates = self._mailbox.find_candidates(context)
         if not candidates:
             return []

@@ -20,15 +20,18 @@ from finance_api.classification.evidence import (
     Evidence,
     EvidenceType,
     Split,
+    StrengthTier,
 )
 from finance_api.classification.gatherer import GatherContext, Gatherer
 from finance_api.classification.gatherers.llm_inference import CategoryRef
 from finance_api.classification.gatherers.mailbox import (
     MailboxClient,
     RawEmail,
+    combined_search_terms,
     merchant_terms,
     strip_html,
 )
+from finance_api.classification.gatherers.mailbox_session import imap_session
 from finance_api.classification.llm import ChatFn, extract_json, run_tool_loop
 from finance_api.classification.receipt import reconciliation_tier
 
@@ -82,6 +85,7 @@ def _system_prompt(context: GatherContext, categories: list[CategoryRef]) -> str
         f"Transaction: {context.description!r}, amount {context.amount} "
         f"{context.currency}, date {context.transaction_date}.\n\n"
         f"Allowed categories (id: name):\n{catalog}\n\n"
+        "Include the formatted amount (e.g. 20.00) in searches when helpful.\n\n"
         "When done, respond ONLY with JSON: "
         '{"found": true/false, "merchant": str, "currency": str, "items": '
         '[{"description": str, "amount": number, "category_id": int}]}. '
@@ -110,18 +114,26 @@ class AgenticReceiptGatherer(Gatherer):
         self._default_days = default_days
 
     def gather(self, context: GatherContext) -> list[Evidence]:
+        with imap_session(self._clients):
+            return self._gather(context)
+
+    def _gather(self, context: GatherContext) -> list[Evidence]:
         cache: dict[tuple[str, str], RawEmail] = {}
+        searched_mailboxes: set[str] = set()
 
         def search_mailbox(args: dict[str, Any]) -> str:
             query = str(args.get("query", ""))
             days = int(args.get("days", self._default_days))
-            terms = merchant_terms(query) or query.split()
+            terms = combined_search_terms(query, context.amount, context.currency)
+            if not terms:
+                terms = merchant_terms(query) or query.split()
             since = context.transaction_date - timedelta(days=days)
             until = context.transaction_date + timedelta(days=days)
             candidates: list[dict[str, str]] = []
             for client in self._clients:
                 for email in client.search(terms, since, until):
                     cache[(email.mailbox, email.message_id)] = email
+                    searched_mailboxes.add(email.mailbox)
                     candidates.append(
                         {
                             "id": email.message_id,
@@ -179,6 +191,8 @@ class AgenticReceiptGatherer(Gatherer):
             (s.amount for s in splits if s.amount is not None), Decimal("0")
         )
         tier = reconciliation_tier(items_total, context.amount)
+        if len(searched_mailboxes) > 1 and tier is StrengthTier.PROOF:
+            tier = StrengthTier.STRONG
         return [
             Evidence(
                 claim=Claim.split(splits),

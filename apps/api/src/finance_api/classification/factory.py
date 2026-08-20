@@ -23,15 +23,18 @@ from finance_api.classification.engine import (
 from finance_api.classification.gatherer import Gatherer
 from finance_api.classification.gatherers.agentic_receipt import AgenticReceiptGatherer
 from finance_api.classification.gatherers.history import HistoryGatherer
-from finance_api.classification.gatherers.imap_mailbox import ImapMailboxClient
 from finance_api.classification.gatherers.llm_inference import (
     CategoryRef,
     LLMInferenceGatherer,
 )
+from finance_api.classification.gatherers.mailbox import MultiMailboxSource
+from finance_api.classification.gatherers.receipt import ReceiptGatherer
 from finance_api.classification.gatherers.rules import RuleGatherer
 from finance_api.classification.gatherers.web_lookup import WebLookupGatherer
 from finance_api.classification.llm import LiteLLMClient
+from finance_api.classification.mailbox_factory import build_mailbox_clients
 from finance_api.classification.policy import EvidencePolicy
+from finance_api.classification.receipt import ReceiptExtractor
 from finance_api.classification.web_search import BraveWebSearch
 from finance_api.core.config import Settings
 from finance_api.core.config import settings as default_settings
@@ -91,15 +94,15 @@ def build_gatherers(
             )
             gatherers.append(WebLookupGatherer(_llm().chat, web, cats()))
 
-        if settings.gmail_imap_user and settings.gmail_imap_password:
-            mailbox = ImapMailboxClient(
-                mailbox_id="gmail",
-                host=settings.gmail_imap_host,
-                username=settings.gmail_imap_user,
-                password=settings.gmail_imap_password,
-                folder=settings.gmail_imap_folder,
+        mailbox_clients = build_mailbox_clients(session, settings)
+        if mailbox_clients:
+            mailbox_source = MultiMailboxSource(mailbox_clients)
+            gatherers.append(
+                ReceiptGatherer(mailbox_source, ReceiptExtractor(_llm()), cats())
             )
-            gatherers.append(AgenticReceiptGatherer(_llm().chat, [mailbox], cats()))
+            gatherers.append(
+                AgenticReceiptGatherer(_llm().chat, mailbox_clients, cats())
+            )
 
     return gatherers
 
