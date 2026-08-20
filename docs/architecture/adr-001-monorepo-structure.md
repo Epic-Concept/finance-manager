@@ -7,6 +7,7 @@ Accepted
 The Finance Manager application consists of multiple components:
 - FastAPI backend (API)
 - React/TypeScript frontend (Web)
+- Expo / React Native mobile client (iOS-first)
 - Terraform infrastructure (IaC)
 - Documentation
 
@@ -19,7 +20,8 @@ We will use a monorepo structure with the following layout:
 finance_manager/
 ├── apps/
 │   ├── api/          # FastAPI backend
-│   └── web/          # React frontend
+│   ├── web/          # React frontend
+│   └── mobile/       # Expo / React Native (Quiet Ledger)
 ├── infra/            # Terraform infrastructure
 ├── docs/             # Documentation
 └── .github/workflows # CI/CD pipelines
@@ -30,7 +32,8 @@ finance_manager/
 1. **Separate `apps/` directory** - Application code is isolated from infrastructure and documentation
 2. **Independent packages** - Each app has its own package configuration (`pyproject.toml`, `package.json`)
 3. **Shared CI/CD** - Single GitHub Actions workflow handles all components
-4. **Docker images per app** - Each application has its own Dockerfile for independent deployment
+4. **Docker images per app** - API and web ship as Docker images; mobile ships via EAS / TestFlight
+5. **Shared API contract** - Web and mobile are separate clients of the same FastAPI surface
 
 ## Consequences
 
